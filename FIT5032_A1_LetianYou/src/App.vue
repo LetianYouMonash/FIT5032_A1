@@ -1,47 +1,48 @@
-<script setup>
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
-</script>
-
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
+  <div class="container mt-5">
+    <h1>User Information</h1>
 
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-    </div>
-  </header>
+    <form @submit.prevent="validateForm">
+      <div class="mb-3">
+        <label for="username" class="form-label">Username</label>
+        <input id="username" v-model="username" type="text" class="form-control" />
+        <div v-if="usernameError" class="text-danger">
+          {{ usernameError }}
+        </div>
+      </div>
 
-  <main>
-    <TheWelcome />
-  </main>
+      <div class="mb-3">
+        <label for="email" class="form-label">Email</label>
+        <input id="email" v-model="email" type="text" class="form-control" />
+        <div v-if="emailError" class="text-danger">
+          {{ emailError }}
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+  </div>
 </template>
 
-<style scoped>
-header {
-  line-height: 1.5;
-}
+<script setup>
+import { ref } from 'vue'
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
+const username = ref('')
+const email = ref('')
 
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
+const usernameError = ref('')
+const emailError = ref('')
+
+const validateForm = () => {
+  usernameError.value = ''
+  emailError.value = ''
+
+  if (username.value.trim() === '') {
+    usernameError.value = 'Username is required.'
   }
 
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
+  if (!email.value.includes('@')) {
+    emailError.value = 'Please enter a valid email address.'
   }
 }
-</style>
+</script>
