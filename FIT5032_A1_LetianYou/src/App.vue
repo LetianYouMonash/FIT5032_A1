@@ -21,6 +21,14 @@
 
       <button type="submit" class="btn btn-primary">Submit</button>
     </form>
+
+    <h2 class="mt-5">Registered Users</h2>
+
+    <ul class="list-group">
+      <li v-for="user in users" :key="user.email" class="list-group-item">
+        {{ user.username }} - {{ user.email }}
+      </li>
+    </ul>
   </div>
 </template>
 
@@ -33,6 +41,11 @@ const email = ref('')
 const usernameError = ref('')
 const emailError = ref('')
 
+const users = ref([
+  { username: 'FIT5032', email: 'fit@5032.com' },
+  { username: 'Letian You', email: 'letian@you.com' },
+])
+
 const validateForm = () => {
   usernameError.value = ''
   emailError.value = ''
@@ -43,6 +56,16 @@ const validateForm = () => {
 
   if (!email.value.includes('@')) {
     emailError.value = 'Please enter a valid email address.'
+  }
+
+  if (usernameError.value === '' && emailError.value === '') {
+    users.value.push({
+      username: username.value,
+      email: email.value,
+    })
+
+    username.value = ''
+    email.value = ''
   }
 }
 </script>
