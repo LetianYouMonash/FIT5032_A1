@@ -1,71 +1,78 @@
 <template>
-  <div class="container mt-5">
-    <h1>User Information</h1>
+  <Login
+    v-if="currentPage === 'login'"
+    :users="users"
+    @register="currentPage = 'register'"
+    @login-success="loginSuccess"
+  />
 
-    <form @submit.prevent="validateForm">
-      <div class="mb-3">
-        <label for="username" class="form-label">Username</label>
-        <input id="username" v-model="username" type="text" class="form-control" />
-        <div v-if="usernameError" class="text-danger">
-          {{ usernameError }}
-        </div>
-      </div>
+  <Register
+    v-else-if="currentPage === 'register'"
+    :users="users"
+    @register-user="addUser"
+    @update-user="updateUser"
+    @delete-user="deleteUser"
+    @back-login="currentPage = 'login'"
+  />
 
-      <div class="mb-3">
-        <label for="email" class="form-label">Email</label>
-        <input id="email" v-model="email" type="text" class="form-control" />
-        <div v-if="emailError" class="text-danger">
-          {{ emailError }}
-        </div>
-      </div>
+  <Home v-else-if="currentPage === 'home'" @change-page="changePage" @back-login="backToLogin" />
 
-      <button type="submit" class="btn btn-primary">Submit</button>
-    </form>
+  <Recycling v-else-if="currentPage === 'recycling'" @back-home="currentPage = 'home'" />
 
-    <h2 class="mt-5">Registered Users</h2>
+  <Map v-else-if="currentPage === 'map'" @back-home="currentPage = 'home'" />
 
-    <ul class="list-group">
-      <li v-for="user in users" :key="user.email" class="list-group-item">
-        {{ user.username }} - {{ user.email }}
-      </li>
-    </ul>
-  </div>
+  <Learn v-else-if="currentPage === 'learn'" @back-home="currentPage = 'home'" />
+
+  <News v-else-if="currentPage === 'news'" @back-home="currentPage = 'home'" />
+
+  <Profile
+    v-else-if="currentPage === 'profile'"
+    :current-user="currentUser"
+    @back-home="currentPage = 'home'"
+  />
 </template>
 
 <script setup>
 import { ref } from 'vue'
 
-const username = ref('')
-const email = ref('')
+import Login from './Login.vue'
+import Register from './Register.vue'
+import Home from './Home.vue'
+import Recycling from './Recycling.vue'
+import Map from './Map.vue'
+import Learn from './Learn.vue'
+import News from './News.vue'
+import Profile from './Profile.vue'
 
-const usernameError = ref('')
-const emailError = ref('')
+const currentPage = ref('login')
 
-const users = ref([
-  { username: 'FIT5032', email: 'fit@5032.com' },
-  { username: 'Letian You', email: 'letian@you.com' },
-])
+const users = ref([])
 
-const validateForm = () => {
-  usernameError.value = ''
-  emailError.value = ''
+const currentUser = ref(null)
 
-  if (username.value.trim() === '') {
-    usernameError.value = 'Username is required.'
-  }
+const addUser = (newUser) => {
+  users.value.push(newUser)
+}
 
-  if (!email.value.includes('@')) {
-    emailError.value = 'Please enter a valid email address.'
-  }
+const loginSuccess = (user) => {
+  currentUser.value = user
+  currentPage.value = 'home'
+}
 
-  if (usernameError.value === '' && emailError.value === '') {
-    users.value.push({
-      username: username.value,
-      email: email.value,
-    })
+const changePage = (page) => {
+  currentPage.value = page
+}
 
-    username.value = ''
-    email.value = ''
-  }
+const backToLogin = () => {
+  currentUser.value = null
+  currentPage.value = 'login'
+}
+
+const updateUser = ({ index, field, value }) => {
+  users.value[index][field] = value
+}
+
+const deleteUser = (index) => {
+  users.value.splice(index, 1)
 }
 </script>
