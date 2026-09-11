@@ -1,4 +1,6 @@
 // Browser-local coursework demo. Server-side authentication is needed for deployment.
+import { removeRatingsForUser } from './ratings.js'
+
 const ACCOUNTS_KEY = 'fit5032.accounts.v1'
 const SESSION_KEY = 'fit5032.session.v1'
 const iterations = 600000
@@ -102,6 +104,8 @@ export function deleteAccount(id) {
   const index = users.findIndex((user) => user.id === id)
   if (index === -1) throw new Error('Account not found.')
   if (users[index].role === 'admin') throw new Error('The administrator account cannot be deleted.')
+  const deletedUserId = users[index].id
   users.splice(index, 1)
   localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(users))
+  removeRatingsForUser(deletedUserId)
 }

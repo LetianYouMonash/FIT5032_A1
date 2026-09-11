@@ -21,6 +21,10 @@
 
   <Recycling
     v-else-if="currentUser && currentPage === 'recycling'"
+    :current-user="currentUser"
+    :get-rating-summary="getRatingSummary"
+    :get-user-rating="getUserRating"
+    :save-rating="saveRating"
     @back-home="currentPage = 'home'"
   />
 
@@ -64,6 +68,7 @@ import Learn from './Learn.vue'
 import News from './News.vue'
 import Profile from './Profile.vue'
 import Admin from './Admin.vue'
+import { getRatingSummary, getUserRating, saveRating } from './ratings.js'
 
 const currentUser = ref(restoreSession())
 const currentPage = ref(currentUser.value ? 'home' : 'login')
