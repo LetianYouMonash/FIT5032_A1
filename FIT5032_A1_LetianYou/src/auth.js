@@ -1,5 +1,6 @@
 // Browser-local coursework demo. Server-side authentication is needed for deployment.
 import { removeRatingsForUser } from './ratings.js'
+import { validateRegistration } from './validation.js'
 
 const ACCOUNTS_KEY = 'fit5032.accounts.v1'
 const SESSION_KEY = 'fit5032.session.v1'
@@ -41,6 +42,8 @@ async function derivePassword(password, salt) {
 
 export async function registerAccount({ username, email, password }) {
   username = username.trim()
+  const validationError = validateRegistration({ username, email, password })
+  if (validationError) throw new Error(validationError)
   const salt = Array.from(crypto.getRandomValues(new Uint8Array(16)))
   const passwordHash = await derivePassword(password, salt)
   try {

@@ -6,13 +6,27 @@
       <div class="mb-3">
         <label for="loginUsername" class="form-label"> Username </label>
 
-        <input id="loginUsername" v-model="username" type="text" class="form-control" />
+        <input
+          id="loginUsername"
+          v-model="username"
+          type="text"
+          maxlength="30"
+          autocomplete="username"
+          class="form-control"
+        />
       </div>
 
       <div class="mb-3">
         <label for="loginPassword" class="form-label"> Password </label>
 
-        <input id="loginPassword" v-model="password" type="password" class="form-control" />
+        <input
+          id="loginPassword"
+          v-model="password"
+          type="password"
+          maxlength="128"
+          autocomplete="current-password"
+          class="form-control"
+        />
       </div>
 
       <div v-if="errorMessage" class="text-danger mb-3">
