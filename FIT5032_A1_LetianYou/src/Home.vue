@@ -9,6 +9,12 @@
         </button>
       </div>
 
+      <div v-if="isAdmin" class="col-12 col-md">
+        <button class="btn btn-outline-danger w-100" @click="$emit('change-page', 'admin')">
+          Admin panel
+        </button>
+      </div>
+
       <div class="col-12 col-md">
         <button class="btn btn-outline-primary w-100" @click="$emit('change-page', 'map')">
           Map
@@ -39,5 +45,6 @@
 </template>
 
 <script setup>
+defineProps({ isAdmin: Boolean })
 defineEmits(['change-page', 'back-login'])
 </script>

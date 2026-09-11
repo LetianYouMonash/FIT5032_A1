@@ -6,11 +6,19 @@ const iterations = 600000
 function accounts() {
   const value = JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '[]')
   if (!Array.isArray(value)) throw new Error('Saved accounts could not be read.')
+  let changed = false
+  value.forEach((user, index) => {
+    if (!user.role) {
+      user.role = index === 0 ? 'admin' : 'user'
+      changed = true
+    }
+  })
+  if (changed) localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(value))
   return value
 }
 
 function publicUser(user) {
-  return { id: user.id, username: user.username, email: user.email }
+  return { id: user.id, username: user.username, email: user.email, role: user.role }
 }
 
 async function derivePassword(password, salt) {
@@ -38,7 +46,14 @@ export async function registerAccount({ username, email, password }) {
     if (users.some((user) => user.username === username)) {
       throw new Error('Username already exists.')
     }
-    users.push({ id: crypto.randomUUID(), username, email: email.trim(), salt, passwordHash })
+    users.push({
+      id: crypto.randomUUID(),
+      username,
+      email: email.trim(),
+      role: users.length === 0 ? 'admin' : 'user',
+      salt,
+      passwordHash,
+    })
     localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(users))
   } catch (error) {
     if (error.message === 'Username already exists.') throw error
@@ -76,4 +91,17 @@ export function restoreSession() {
 
 export function clearSession() {
   sessionStorage.removeItem(SESSION_KEY)
+}
+
+export function getAccounts() {
+  return accounts().map(publicUser)
+}
+
+export function deleteAccount(id) {
+  const users = accounts()
+  const index = users.findIndex((user) => user.id === id)
+  if (index === -1) throw new Error('Account not found.')
+  if (users[index].role === 'admin') throw new Error('The administrator account cannot be deleted.')
+  users.splice(index, 1)
+  localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(users))
 }

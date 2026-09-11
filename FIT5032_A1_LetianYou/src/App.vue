@@ -16,6 +16,7 @@
     v-else-if="currentUser && currentPage === 'home'"
     @change-page="changePage"
     @back-login="backToLogin"
+    :is-admin="currentUser?.role === 'admin'"
   />
 
   <Recycling
@@ -34,11 +35,25 @@
     :current-user="currentUser"
     @back-home="currentPage = 'home'"
   />
+
+  <Admin
+    v-else-if="currentUser?.role === 'admin' && currentPage === 'admin'"
+    :get-accounts="getAccounts"
+    :delete-account="deleteAccount"
+    @back-home="currentPage = 'home'"
+  />
 </template>
 
 <script setup>
 import { ref } from 'vue'
-import { registerAccount, authenticate, restoreSession, clearSession } from './auth.js'
+import {
+  registerAccount,
+  authenticate,
+  restoreSession,
+  clearSession,
+  getAccounts,
+  deleteAccount,
+} from './auth.js'
 
 import Login from './Login.vue'
 import Register from './Register.vue'
@@ -48,6 +63,7 @@ import Map from './Map.vue'
 import Learn from './Learn.vue'
 import News from './News.vue'
 import Profile from './Profile.vue'
+import Admin from './Admin.vue'
 
 const currentUser = ref(restoreSession())
 const currentPage = ref(currentUser.value ? 'home' : 'login')
@@ -58,8 +74,10 @@ const loginSuccess = (user) => {
 }
 
 const changePage = (page) => {
-  const pages = ['home', 'recycling', 'map', 'learn', 'news', 'profile']
-  currentPage.value = currentUser.value && pages.includes(page) ? page : 'login'
+  const publicPages = ['home', 'recycling', 'map', 'learn', 'news', 'profile']
+  const allowed =
+    publicPages.includes(page) || (page === 'admin' && currentUser.value?.role === 'admin')
+  currentPage.value = currentUser.value && allowed ? page : currentUser.value ? 'home' : 'login'
 }
 
 const backToLogin = () => {
