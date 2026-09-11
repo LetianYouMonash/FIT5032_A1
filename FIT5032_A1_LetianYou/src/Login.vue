@@ -20,9 +20,13 @@
       </div>
 
       <div class="d-flex gap-2">
-        <button class="btn btn-primary flex-fill" @click="login">Login</button>
+        <button class="btn btn-primary flex-fill" :disabled="pending" @click="login">
+          {{ pending ? 'Logging in...' : 'Login' }}
+        </button>
 
-        <button class="btn btn-secondary flex-fill" @click="$emit('register')">Register</button>
+        <button class="btn btn-secondary flex-fill" :disabled="pending" @click="$emit('register')">
+          Register
+        </button>
       </div>
     </div>
   </div>
@@ -32,10 +36,7 @@
 import { ref } from 'vue'
 
 const props = defineProps({
-  users: {
-    type: Array,
-    required: true,
-  },
+  authenticate: { type: Function, required: true },
 })
 
 const emit = defineEmits(['register', 'login-success'])
@@ -43,8 +44,10 @@ const emit = defineEmits(['register', 'login-success'])
 const username = ref('')
 const password = ref('')
 const errorMessage = ref('')
+const pending = ref(false)
 
-const login = () => {
+const login = async () => {
+  if (pending.value) return
   errorMessage.value = ''
 
   if (username.value.trim() === '' && password.value.trim() === '') {
@@ -62,17 +65,16 @@ const login = () => {
     return
   }
 
-  const user = props.users.find(
-    (user) => user.username === username.value && user.password === password.value,
-  )
-
-  if (user) {
+  pending.value = true
+  try {
+    const user = await props.authenticate(username.value.trim(), password.value)
     emit('login-success', user)
-
     username.value = ''
     password.value = ''
-  } else {
-    errorMessage.value = 'Incorrect username or password.'
+  } catch (error) {
+    errorMessage.value = error.message
+  } finally {
+    pending.value = false
   }
 }
 </script>

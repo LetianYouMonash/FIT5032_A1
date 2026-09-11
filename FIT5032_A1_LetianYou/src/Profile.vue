@@ -6,8 +6,6 @@
       <p>Username: {{ currentUser.username }}</p>
 
       <p>Email: {{ currentUser.email }}</p>
-
-      <p class="mb-0">Password: {{ currentUser.password }}</p>
     </div>
 
     <button class="btn btn-primary mt-4" @click="$emit('back-home')">Back to Home</button>

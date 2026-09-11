@@ -1,32 +1,36 @@
 <template>
   <Login
     v-if="currentPage === 'login'"
-    :users="users"
+    :authenticate="authenticate"
     @register="currentPage = 'register'"
     @login-success="loginSuccess"
   />
 
   <Register
     v-else-if="currentPage === 'register'"
-    :users="users"
-    @register-user="addUser"
-    @update-user="updateUser"
-    @delete-user="deleteUser"
+    :register-account="registerAccount"
     @back-login="currentPage = 'login'"
   />
 
-  <Home v-else-if="currentPage === 'home'" @change-page="changePage" @back-login="backToLogin" />
+  <Home
+    v-else-if="currentUser && currentPage === 'home'"
+    @change-page="changePage"
+    @back-login="backToLogin"
+  />
 
-  <Recycling v-else-if="currentPage === 'recycling'" @back-home="currentPage = 'home'" />
+  <Recycling
+    v-else-if="currentUser && currentPage === 'recycling'"
+    @back-home="currentPage = 'home'"
+  />
 
-  <Map v-else-if="currentPage === 'map'" @back-home="currentPage = 'home'" />
+  <Map v-else-if="currentUser && currentPage === 'map'" @back-home="currentPage = 'home'" />
 
-  <Learn v-else-if="currentPage === 'learn'" @back-home="currentPage = 'home'" />
+  <Learn v-else-if="currentUser && currentPage === 'learn'" @back-home="currentPage = 'home'" />
 
-  <News v-else-if="currentPage === 'news'" @back-home="currentPage = 'home'" />
+  <News v-else-if="currentUser && currentPage === 'news'" @back-home="currentPage = 'home'" />
 
   <Profile
-    v-else-if="currentPage === 'profile'"
+    v-else-if="currentUser && currentPage === 'profile'"
     :current-user="currentUser"
     @back-home="currentPage = 'home'"
   />
@@ -34,6 +38,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import { registerAccount, authenticate, restoreSession, clearSession } from './auth.js'
 
 import Login from './Login.vue'
 import Register from './Register.vue'
@@ -44,15 +49,8 @@ import Learn from './Learn.vue'
 import News from './News.vue'
 import Profile from './Profile.vue'
 
-const currentPage = ref('login')
-
-const users = ref([])
-
-const currentUser = ref(null)
-
-const addUser = (newUser) => {
-  users.value.push(newUser)
-}
+const currentUser = ref(restoreSession())
+const currentPage = ref(currentUser.value ? 'home' : 'login')
 
 const loginSuccess = (user) => {
   currentUser.value = user
@@ -60,19 +58,13 @@ const loginSuccess = (user) => {
 }
 
 const changePage = (page) => {
-  currentPage.value = page
+  const pages = ['home', 'recycling', 'map', 'learn', 'news', 'profile']
+  currentPage.value = currentUser.value && pages.includes(page) ? page : 'login'
 }
 
 const backToLogin = () => {
+  clearSession()
   currentUser.value = null
   currentPage.value = 'login'
-}
-
-const updateUser = ({ index, field, value }) => {
-  users.value[index][field] = value
-}
-
-const deleteUser = (index) => {
-  users.value.splice(index, 1)
 }
 </script>

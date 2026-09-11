@@ -34,7 +34,7 @@
       </div>
     </div>
 
-    <button class="btn btn-secondary mt-4" @click="$emit('back-login')">Back to Login</button>
+    <button class="btn btn-secondary mt-4" @click="$emit('back-login')">Log out</button>
   </div>
 </template>
 
