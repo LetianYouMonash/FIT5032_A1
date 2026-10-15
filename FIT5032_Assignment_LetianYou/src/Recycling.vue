@@ -23,6 +23,7 @@
             <label for="recyclingSearchColumn" class="form-label">
               Search Column
             </label>
+
             <select
               id="recyclingSearchColumn"
               v-model="searchColumn"
@@ -41,6 +42,7 @@
             <label for="recyclingSearchInput" class="form-label">
               Search Materials
             </label>
+
             <input
               id="recyclingSearchInput"
               v-model="searchQuery"
@@ -54,6 +56,56 @@
             />
           </div>
         </div>
+
+        <!-- E.4: Export controls -->
+        <section
+          class="export-section mb-4"
+          aria-labelledby="export-heading"
+        >
+          <div
+            class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3"
+          >
+            <div>
+              <h3 id="export-heading" class="h6 mb-1">
+                Export Waste Disposal Data
+              </h3>
+
+              <p class="text-muted small mb-0">
+                Download all {{ filteredMaterials.length }} matching
+                materials in CSV or PDF format.
+              </p>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2">
+              <button
+                type="button"
+                class="btn btn-outline-success"
+                :disabled="exporting || filteredMaterials.length === 0"
+                @click="exportCSV"
+              >
+                Export CSV
+              </button>
+
+              <button
+                type="button"
+                class="btn btn-outline-primary"
+                :disabled="exporting || filteredMaterials.length === 0"
+                @click="exportPDF"
+              >
+                Export PDF
+              </button>
+            </div>
+          </div>
+
+          <p
+            v-if="exportMessage"
+            class="mt-3 mb-0"
+            :class="exportError ? 'text-danger' : 'text-success'"
+            :role="exportError ? 'alert' : 'status'"
+          >
+            {{ exportMessage }}
+          </p>
+        </section>
 
         <div class="table-responsive">
           <table
@@ -84,7 +136,10 @@
             </thead>
 
             <tbody>
-              <tr v-for="item in paginatedMaterials" :key="item.id">
+              <tr
+                v-for="item in paginatedMaterials"
+                :key="item.id"
+              >
                 <td class="fw-semibold">
                   {{ item.material }}
                 </td>
@@ -121,12 +176,14 @@
                 </td>
 
                 <td>{{ item.garbageType }}</td>
-
                 <td>{{ item.notes }}</td>
               </tr>
 
               <tr v-if="paginatedMaterials.length === 0">
-                <td colspan="5" class="text-center text-muted py-4">
+                <td
+                  colspan="5"
+                  class="text-center text-muted py-4"
+                >
                   No matching materials found.
                 </td>
               </tr>
@@ -137,7 +194,12 @@
         <div
           class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 mt-3"
         >
-          <p class="text-muted mb-0">
+          <p
+            class="text-muted mb-0"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
             Showing {{ startRow }}–{{ endRow }} of
             {{ filteredMaterials.length }} materials
           </p>
@@ -167,7 +229,9 @@
                 <button
                   type="button"
                   class="page-link"
-                  :aria-current="currentPage === page ? 'page' : undefined"
+                  :aria-current="
+                    currentPage === page ? 'page' : undefined
+                  "
                   @click="currentPage = page"
                 >
                   {{ page }}
@@ -214,6 +278,8 @@
 
 <script setup>
 import { computed, ref, watch } from 'vue'
+import { jsPDF } from 'jspdf'
+import autoTable from 'jspdf-autotable'
 import RatingCard from './RatingCard.vue'
 
 defineProps({
@@ -382,6 +448,10 @@ const sortDirection = ref('asc')
 const currentPage = ref(1)
 const pageSize = 10
 
+const exporting = ref(false)
+const exportMessage = ref('')
+const exportError = ref(false)
+
 const filteredMaterials = computed(() => {
   const query = searchQuery.value.trim().toLowerCase()
 
@@ -442,6 +512,11 @@ watch([searchQuery, searchColumn], () => {
   currentPage.value = 1
 })
 
+watch([searchQuery, searchColumn, sortColumn, sortDirection], () => {
+  exportMessage.value = ''
+  exportError.value = false
+})
+
 const sortBy = (column) => {
   if (sortColumn.value === column) {
     sortDirection.value =
@@ -464,6 +539,200 @@ const ariaSort = (column) => {
   return sortDirection.value === 'asc'
     ? 'ascending'
     : 'descending'
+}
+
+// E.4: Shared export helpers
+
+function exportRows() {
+  return filteredMaterials.value.map((item) =>
+    columns.map((column) => String(item[column.key] ?? ''))
+  )
+}
+
+function exportFilename(extension) {
+  const date = new Date()
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+
+  return `waste-disposal-guide-${year}-${month}-${day}.${extension}`
+}
+
+function escapeCSV(value) {
+  let text = String(value ?? '')
+
+  // Prevent spreadsheet software from interpreting exported
+  // text values as formulas.
+  if (/^[\s]*[=+\-@]/.test(text)) {
+    text = `'${text}`
+  }
+
+  return `"${text.replace(/"/g, '""')}"`
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+
+  link.href = url
+  link.download = filename
+
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+
+  // Allow the browser time to begin the download.
+  setTimeout(() => URL.revokeObjectURL(url), 60000)
+}
+
+function exportCSV() {
+  if (exporting.value || filteredMaterials.value.length === 0) return
+
+  exporting.value = true
+  exportMessage.value = ''
+  exportError.value = false
+
+  try {
+    const header = columns.map((column) => column.label)
+    const rows = exportRows()
+
+    const csv = [header, ...rows]
+      .map((row) => row.map(escapeCSV).join(','))
+      .join('\r\n')
+
+    // UTF-8 BOM improves compatibility with Microsoft Excel.
+    const blob = new Blob(['\uFEFF', csv], {
+      type: 'text/csv;charset=utf-8;',
+    })
+
+    downloadBlob(blob, exportFilename('csv'))
+
+    exportMessage.value =
+      `CSV download started for ${rows.length} materials.`
+  } catch (error) {
+    console.error('CSV export failed:', error)
+
+    exportError.value = true
+    exportMessage.value =
+      'Unable to export CSV. Please try again.'
+  } finally {
+    exporting.value = false
+  }
+}
+
+function exportPDF() {
+  if (exporting.value || filteredMaterials.value.length === 0) return
+
+  exporting.value = true
+  exportMessage.value = ''
+  exportError.value = false
+
+  try {
+    const rows = exportRows()
+    const documentPDF = new jsPDF({
+      orientation: 'landscape',
+      unit: 'mm',
+      format: 'a4',
+    })
+
+    const pageWidth = documentPDF.internal.pageSize.getWidth()
+    const pageHeight = documentPDF.internal.pageSize.getHeight()
+
+    const generatedAt = new Date().toLocaleString('en-AU')
+
+    documentPDF.setFont('helvetica', 'bold')
+    documentPDF.setFontSize(18)
+    documentPDF.text('Waste Disposal Guide', 14, 18)
+
+    documentPDF.setFont('helvetica', 'normal')
+    documentPDF.setFontSize(10)
+    documentPDF.text(`Generated: ${generatedAt}`, 14, 26)
+    documentPDF.text(
+      `Total matching materials: ${rows.length}`,
+      14,
+      32
+    )
+
+    const searchDescription = searchQuery.value.trim()
+      ? `Search: ${columnLabels[searchColumn.value] || 'All Columns'} - ${searchQuery.value.trim()}`
+      : 'Search: All materials'
+
+    const searchLines = documentPDF.splitTextToSize(
+      searchDescription,
+      pageWidth - 28
+    )
+
+    documentPDF.text(searchLines, 14, 38)
+
+    const sortDescription =
+      `Sorted by: ${columnLabels[sortColumn.value]} (${sortDirection.value === 'asc' ? 'Ascending' : 'Descending'})`
+
+    const sortY = 38 + searchLines.length * 4.5
+
+    documentPDF.text(sortDescription, 14, sortY)
+
+    autoTable(documentPDF, {
+      startY: sortY + 7,
+      head: [columns.map((column) => column.label)],
+      body: rows,
+      theme: 'striped',
+      margin: {
+        left: 14,
+        right: 14,
+        bottom: 20,
+      },
+      styles: {
+        font: 'helvetica',
+        fontSize: 8,
+        cellPadding: 3,
+        overflow: 'linebreak',
+        valign: 'top',
+      },
+      headStyles: {
+        fillColor: [45, 85, 125],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+      },
+      columnStyles: {
+        0: { cellWidth: 33 },
+        1: { cellWidth: 27 },
+        2: { cellWidth: 62 },
+        3: { cellWidth: 38 },
+        4: { cellWidth: 'auto' },
+      },
+      didDrawPage: () => {
+        documentPDF.setFont('helvetica', 'normal')
+        documentPDF.setFontSize(8)
+        documentPDF.setTextColor(90)
+
+        documentPDF.text(
+          'General Victorian guidance. Check your local council rules.',
+          14,
+          pageHeight - 11
+        )
+
+        documentPDF.text(
+          `Page ${documentPDF.internal.getCurrentPageInfo().pageNumber}`,
+          pageWidth - 14,
+          pageHeight - 11,
+          { align: 'right' }
+        )
+      },
+    })
+
+    documentPDF.save(exportFilename('pdf'))
+
+    exportMessage.value =
+      `PDF download started for ${rows.length} materials.`
+  } catch (error) {
+    console.error('PDF export failed:', error)
+
+    exportError.value = true
+    exportMessage.value =
+      'Unable to export PDF. Please try again.'
+  } finally {
+    exporting.value = false
+  }
 }
 </script>
 
@@ -540,5 +809,12 @@ const ariaSort = (column) => {
 
 .bin-purple {
   background-color: #7952b3;
+}
+
+.export-section {
+  padding: 18px;
+  border: 1px solid #d5dce3;
+  border-radius: 8px;
+  background-color: #f8f9fa;
 }
 </style>
