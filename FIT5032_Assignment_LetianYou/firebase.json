@@ -1,3 +1,4 @@
+
 {
   "hosting": {
     "public": "dist",
@@ -8,9 +9,30 @@
     ],
     "rewrites": [
       {
+        "source": "/api/email",
+        "function": {
+          "functionId": "sendEmail",
+          "region": "australia-southeast1"
+        }
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
     ]
-  }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "disallowLegacyRuntimeConfig": true,
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ]
+    }
+  ]
 }
