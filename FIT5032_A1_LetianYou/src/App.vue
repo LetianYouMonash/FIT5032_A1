@@ -1,8 +1,17 @@
 <template>
+  <p v-if="sessionError" class="alert alert-warning m-3" role="alert">{{ sessionError }}</p>
+  <p v-if="loadingSession" class="container py-5" role="status">Checking your session...</p>
   <Login
-    v-if="currentPage === 'login'"
+    v-else-if="currentPage === 'login'"
     :authenticate="authenticate"
     @register="currentPage = 'register'"
+    @login-success="loginSuccess"
+    @firebase="currentPage = 'firebase'"
+  />
+
+  <FirebaseLogin
+    v-else-if="currentPage === 'firebase'"
+    @back="currentPage = 'login'"
     @login-success="loginSuccess"
   />
 
@@ -22,9 +31,9 @@
   <Recycling
     v-else-if="currentUser && currentPage === 'recycling'"
     :current-user="currentUser"
-    :get-rating-summary="getRatingSummary"
-    :get-user-rating="getUserRating"
-    :save-rating="saveRating"
+    :get-rating-summary="ratingService.getRatingSummary"
+    :get-user-rating="ratingService.getUserRating"
+    :save-rating="ratingService.saveRating"
     @back-home="currentPage = 'home'"
   />
 
@@ -49,7 +58,14 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import FirebaseLogin from './FirebaseLogin.vue'
+import {
+  observeFirebase,
+  firebaseLogout,
+  firebaseError,
+  firebaseRatingStore,
+} from './firebaseAuth.js'
 import {
   registerAccount,
   authenticate,
@@ -72,8 +88,47 @@ import { getRatingSummary, getUserRating, saveRating } from './ratings.js'
 
 const currentUser = ref(restoreSession())
 const currentPage = ref(currentUser.value ? 'home' : 'login')
+const loadingSession = ref(true)
+const sessionError = ref('')
+const cloudRatings = firebaseRatingStore()
+const ratingService = computed(() =>
+  currentUser.value?.provider === 'firebase'
+    ? cloudRatings
+    : { getRatingSummary, getUserRating, saveRating },
+)
+let unsubscribe
+let disposed = false
+onMounted(async () => {
+  try {
+    const stop = await observeFirebase(
+      (user) => {
+        if (user) loginSuccess(user)
+        else if (currentUser.value?.provider === 'firebase') {
+          currentUser.value = null
+          currentPage.value = 'login'
+        }
+        loadingSession.value = false
+      },
+      (error) => {
+        sessionError.value = firebaseError(error)
+        loadingSession.value = false
+      },
+    )
+    if (disposed) stop()
+    else unsubscribe = stop
+  } catch (error) {
+    sessionError.value = firebaseError(error)
+    loadingSession.value = false
+  }
+})
+onUnmounted(() => {
+  disposed = true
+  unsubscribe?.()
+})
 
 const loginSuccess = (user) => {
+  if (user.provider === 'firebase') clearSession()
+  sessionError.value = ''
   currentUser.value = user
   currentPage.value = 'home'
 }
@@ -85,9 +140,15 @@ const changePage = (page) => {
   currentPage.value = currentUser.value && allowed ? page : currentUser.value ? 'home' : 'login'
 }
 
-const backToLogin = () => {
-  clearSession()
-  currentUser.value = null
-  currentPage.value = 'login'
+const backToLogin = async () => {
+  try {
+    if (currentUser.value?.provider === 'firebase') await firebaseLogout()
+    clearSession()
+    currentUser.value = null
+    currentPage.value = 'login'
+    sessionError.value = ''
+  } catch (error) {
+    sessionError.value = firebaseError(error)
+  }
 }
 </script>

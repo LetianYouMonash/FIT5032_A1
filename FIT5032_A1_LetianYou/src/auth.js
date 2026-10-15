@@ -1,4 +1,4 @@
-// Browser-local coursework demo. Server-side authentication is needed for deployment.
+// Local accounts and roles are browser data, not server-enforced permissions.
 import { removeRatingsForUser } from './ratings.js'
 import { validateRegistration } from './validation.js'
 

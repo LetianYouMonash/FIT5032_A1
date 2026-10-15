@@ -6,6 +6,10 @@
       <p>Username: {{ currentUser.username }}</p>
 
       <p>Email: {{ currentUser.email }}</p>
+      <p>
+        Account provider:
+        {{ currentUser.provider === 'firebase' ? 'Firebase Authentication' : 'Local account' }}
+      </p>
     </div>
 
     <button class="btn btn-primary mt-4" @click="$emit('back-home')">Back to Home</button>

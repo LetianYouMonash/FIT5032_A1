@@ -2,6 +2,7 @@
   <div class="container d-flex justify-content-center align-items-center min-vh-100">
     <div class="card p-4 w-100" style="max-width: 400px">
       <h1 class="text-center mb-4">Login</h1>
+      <p class="text-muted text-center">Local account</p>
 
       <div class="mb-3">
         <label for="loginUsername" class="form-label"> Username </label>
@@ -42,6 +43,14 @@
           Register
         </button>
       </div>
+      <button
+        type="button"
+        class="btn btn-outline-primary mt-3"
+        :disabled="pending"
+        @click="$emit('firebase')"
+      >
+        Sign in with Firebase
+      </button>
     </div>
   </div>
 </template>
@@ -53,7 +62,7 @@ const props = defineProps({
   authenticate: { type: Function, required: true },
 })
 
-const emit = defineEmits(['register', 'login-success'])
+const emit = defineEmits(['register', 'login-success', 'firebase'])
 
 const username = ref('')
 const password = ref('')
