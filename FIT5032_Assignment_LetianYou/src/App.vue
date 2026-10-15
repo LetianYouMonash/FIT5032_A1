@@ -1,77 +1,130 @@
+
 <template>
-  <p v-if="sessionError" class="alert alert-warning m-3" role="alert">{{ sessionError }}</p>
-  <p v-if="loadingSession" class="container py-5" role="status">Checking your session...</p>
-  <Login
-    v-else-if="currentPage === 'login'"
-    :authenticate="authenticate"
-    @register="currentPage = 'register'"
-    @login-success="loginSuccess"
-    @firebase="currentPage = 'firebase'"
-  />
+  <a class="skip-link" href="#main-content">
+    Skip to main content
+  </a>
 
-  <FirebaseLogin
-    v-else-if="currentPage === 'firebase'"
-    @back="currentPage = 'login'"
-    @login-success="loginSuccess"
-  />
+  <p
+    v-if="sessionError"
+    class="alert alert-warning m-3"
+    role="alert"
+  >
+    {{ sessionError }}
+  </p>
 
-  <Register
-    v-else-if="currentPage === 'register'"
-    :register-account="registerAccount"
-    @back-login="currentPage = 'login'"
-  />
+  <p
+    class="visually-hidden"
+    role="status"
+    aria-live="polite"
+    aria-atomic="true"
+  >
+    {{ pageAnnouncement }}
+  </p>
 
-  <Home
-    v-else-if="currentUser && currentPage === 'home'"
-    @change-page="changePage"
-    @back-login="backToLogin"
-    :is-admin="currentUser?.role === 'admin'"
-  />
+  <main
+    id="main-content"
+    ref="mainElement"
+    tabindex="-1"
+  >
+    <p
+      v-if="loadingSession"
+      class="container py-5"
+      role="status"
+    >
+      Checking your session...
+    </p>
 
-  <Recycling
-    v-else-if="currentUser && currentPage === 'recycling'"
-    :current-user="currentUser"
-    :get-rating-summary="ratingService.getRatingSummary"
-    :get-user-rating="ratingService.getUserRating"
-    :save-rating="ratingService.saveRating"
-    @back-home="currentPage = 'home'"
-  />
+    <Login
+      v-else-if="currentPage === 'login'"
+      :authenticate="authenticate"
+      @register="currentPage = 'register'"
+      @login-success="loginSuccess"
+      @firebase="currentPage = 'firebase'"
+    />
 
-  <Map v-else-if="currentUser && currentPage === 'map'" @back-home="currentPage = 'home'" />
+    <FirebaseLogin
+      v-else-if="currentPage === 'firebase'"
+      @back="currentPage = 'login'"
+      @login-success="loginSuccess"
+    />
 
-  <Learn v-else-if="currentUser && currentPage === 'learn'" @back-home="currentPage = 'home'" />
+    <Register
+      v-else-if="currentPage === 'register'"
+      :register-account="registerAccount"
+      @back-login="currentPage = 'login'"
+    />
 
-  <News v-else-if="currentUser && currentPage === 'news'" @back-home="currentPage = 'home'" />
+    <Home
+      v-else-if="currentUser && currentPage === 'home'"
+      :is-admin="currentUser?.role === 'admin'"
+      @change-page="changePage"
+      @back-login="backToLogin"
+    />
 
-  <Email
-    v-else-if="currentUser && currentPage === 'email'"
-    :current-user="currentUser"
-    @back-home="currentPage = 'home'"
-  />
+    <Recycling
+      v-else-if="currentUser && currentPage === 'recycling'"
+      :current-user="currentUser"
+      :get-rating-summary="ratingService.getRatingSummary"
+      :get-user-rating="ratingService.getUserRating"
+      :save-rating="ratingService.saveRating"
+      @back-home="currentPage = 'home'"
+    />
 
-  <Profile
-    v-else-if="currentUser && currentPage === 'profile'"
-    :current-user="currentUser"
-    @back-home="currentPage = 'home'"
-  />
+    <Map
+      v-else-if="currentUser && currentPage === 'map'"
+      @back-home="currentPage = 'home'"
+    />
 
-  <Admin
-    v-else-if="currentUser?.role === 'admin' && currentPage === 'admin'"
-    :get-accounts="getAccounts"
-    :delete-account="deleteAccount"
-    @back-home="currentPage = 'home'"
-  />
+    <Learn
+      v-else-if="currentUser && currentPage === 'learn'"
+      @back-home="currentPage = 'home'"
+    />
+
+    <News
+      v-else-if="currentUser && currentPage === 'news'"
+      @back-home="currentPage = 'home'"
+    />
+
+    <Email
+      v-else-if="currentUser && currentPage === 'email'"
+      :current-user="currentUser"
+      @back-home="currentPage = 'home'"
+    />
+
+    <Profile
+      v-else-if="currentUser && currentPage === 'profile'"
+      :current-user="currentUser"
+      @back-home="currentPage = 'home'"
+    />
+
+    <Admin
+      v-else-if="currentUser?.role === 'admin' && currentPage === 'admin'"
+      :get-accounts="getAccounts"
+      :delete-account="deleteAccount"
+      @back-home="currentPage = 'home'"
+    />
+  </main>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import {
+  ref,
+  computed,
+  onMounted,
+  onUnmounted,
+  watch,
+  nextTick,
+} from 'vue'
+
 import FirebaseLogin from './FirebaseLogin.vue'
+
 import {
   observeFirebase,
   firebaseLogout,
   firebaseError,
   firebaseRatingStore,
 } from './firebaseAuth.js'
+
 import {
   registerAccount,
   authenticate,
@@ -91,65 +144,155 @@ import News from './News.vue'
 import Email from './Email.vue'
 import Profile from './Profile.vue'
 import Admin from './Admin.vue'
-import { getRatingSummary, getUserRating, saveRating } from './ratings.js'
+
+import {
+  getRatingSummary,
+  getUserRating,
+  saveRating,
+} from './ratings.js'
 
 const currentUser = ref(restoreSession())
 const currentPage = ref(currentUser.value ? 'home' : 'login')
 const loadingSession = ref(true)
 const sessionError = ref('')
+const mainElement = ref(null)
+const pageAnnouncement = ref('')
+
 const cloudRatings = firebaseRatingStore()
+
 const ratingService = computed(() =>
   currentUser.value?.provider === 'firebase'
     ? cloudRatings
-    : { getRatingSummary, getUserRating, saveRating },
+    : {
+        getRatingSummary,
+        getUserRating,
+        saveRating,
+      }
 )
+
+const pageNames = {
+  login: 'Login',
+  firebase: 'Firebase Login',
+  register: 'Register',
+  home: 'Home',
+  recycling: 'Recycling',
+  map: 'Recycling Location Map',
+  learn: 'Learn',
+  news: 'News',
+  email: 'Email',
+  profile: 'Profile',
+  admin: 'Admin',
+}
+
+const currentPageName = computed(
+  () => pageNames[currentPage.value] || 'Home'
+)
+
 let unsubscribe
 let disposed = false
+
+watch(
+  [currentPage, loadingSession],
+  async ([page, loading], [previousPage, previousLoading]) => {
+    if (loading) {
+      document.title = 'Loading | Recycling Application'
+      return
+    }
+
+    document.title =
+      `${pageNames[page] || 'Home'} | Recycling Application`
+
+    pageAnnouncement.value =
+      `${pageNames[page] || 'Home'} page loaded`
+
+    if (page !== previousPage && !previousLoading) {
+    await nextTick()
+
+    if (!disposed) {
+      mainElement.value?.focus({ preventScroll: true })
+    }
+  }
+  },
+  { immediate: true, flush: 'post' }
+)
+
 onMounted(async () => {
   try {
     const stop = await observeFirebase(
       (user) => {
-        if (user) loginSuccess(user)
-        else if (currentUser.value?.provider === 'firebase') {
+        if (user) {
+          loginSuccess(user)
+        } else if (currentUser.value?.provider === 'firebase') {
           currentUser.value = null
           currentPage.value = 'login'
         }
+
         loadingSession.value = false
       },
       (error) => {
         sessionError.value = firebaseError(error)
         loadingSession.value = false
-      },
+      }
     )
-    if (disposed) stop()
-    else unsubscribe = stop
+
+    if (disposed) {
+      stop()
+    } else {
+      unsubscribe = stop
+    }
   } catch (error) {
     sessionError.value = firebaseError(error)
     loadingSession.value = false
   }
 })
+
 onUnmounted(() => {
   disposed = true
   unsubscribe?.()
 })
 
 const loginSuccess = (user) => {
-  if (user.provider === 'firebase') clearSession()
+  if (user.provider === 'firebase') {
+    clearSession()
+  }
+
   sessionError.value = ''
   currentUser.value = user
   currentPage.value = 'home'
 }
 
 const changePage = (page) => {
-  const publicPages = ['home', 'recycling', 'map', 'learn', 'news', 'profile', 'email']
+  const publicPages = [
+    'home',
+    'recycling',
+    'map',
+    'learn',
+    'news',
+    'profile',
+    'email',
+  ]
+
   const allowed =
-    publicPages.includes(page) || (page === 'admin' && currentUser.value?.role === 'admin')
-  currentPage.value = currentUser.value && allowed ? page : currentUser.value ? 'home' : 'login'
+    publicPages.includes(page) ||
+    (
+      page === 'admin' &&
+      currentUser.value?.role === 'admin'
+    )
+
+  currentPage.value =
+    currentUser.value && allowed
+      ? page
+      : currentUser.value
+        ? 'home'
+        : 'login'
 }
 
 const backToLogin = async () => {
   try {
-    if (currentUser.value?.provider === 'firebase') await firebaseLogout()
+    if (currentUser.value?.provider === 'firebase') {
+      await firebaseLogout()
+    }
+
     clearSession()
     currentUser.value = null
     currentPage.value = 'login'
@@ -159,3 +302,52 @@ const backToLogin = async () => {
   }
 }
 </script>
+
+<style>
+.skip-link {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 9999;
+  padding: 12px 18px;
+  background: #ffffff;
+  color: #111827;
+  border: 3px solid #111827;
+  border-radius: 6px;
+  font-weight: 700;
+  text-decoration: none;
+  transform: translateY(-180%);
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+#main-content:focus {
+  outline: none;
+}
+
+:where(
+  button,
+  a,
+  input,
+  select,
+  textarea,
+  [tabindex]
+):focus-visible {
+  outline: 3px solid #005fcc;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+</style>

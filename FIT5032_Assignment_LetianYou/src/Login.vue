@@ -1,48 +1,80 @@
+
 <template>
   <div class="container d-flex justify-content-center align-items-center min-vh-100">
     <div class="card p-4 w-100" style="max-width: 400px">
       <h1 class="text-center mb-4">Login</h1>
       <p class="text-muted text-center">Local account</p>
 
-      <div class="mb-3">
-        <label for="loginUsername" class="form-label"> Username </label>
+      <form novalidate @submit.prevent="login">
+        <div class="mb-3">
+          <label for="loginUsername" class="form-label">
+            Username <span aria-hidden="true">*</span>
+          </label>
 
-        <input
-          id="loginUsername"
-          v-model="username"
-          type="text"
-          maxlength="30"
-          autocomplete="username"
-          class="form-control"
-        />
-      </div>
+          <input
+            id="loginUsername"
+            v-model="username"
+            type="text"
+            maxlength="30"
+            autocomplete="username"
+            class="form-control"
+            :aria-invalid="Boolean(errorMessage && !username.trim())"
+            :aria-describedby="errorMessage ? 'loginError' : undefined"
+            required
+          />
+        </div>
 
-      <div class="mb-3">
-        <label for="loginPassword" class="form-label"> Password </label>
+        <div class="mb-3">
+          <label for="loginPassword" class="form-label">
+            Password <span aria-hidden="true">*</span>
+          </label>
 
-        <input
-          id="loginPassword"
-          v-model="password"
-          type="password"
-          maxlength="128"
-          autocomplete="current-password"
-          class="form-control"
-        />
-      </div>
+          <input
+            id="loginPassword"
+            v-model="password"
+            type="password"
+            maxlength="128"
+            autocomplete="current-password"
+            class="form-control"
+            :aria-invalid="Boolean(errorMessage && !password.trim())"
+            :aria-describedby="errorMessage ? 'loginError' : undefined"
+            required
+          />
+        </div>
 
-      <div v-if="errorMessage" class="text-danger mb-3">
-        {{ errorMessage }}
-      </div>
+        <div
+          v-if="errorMessage"
+          id="loginError"
+          class="text-danger mb-3"
+          role="alert"
+        >
+          {{ errorMessage }}
+        </div>
 
-      <div class="d-flex gap-2">
-        <button class="btn btn-primary flex-fill" :disabled="pending" @click="login">
-          {{ pending ? 'Logging in...' : 'Login' }}
-        </button>
+        <p v-if="pending" class="visually-hidden" role="status">
+          Logging in, please wait.
+        </p>
 
-        <button class="btn btn-secondary flex-fill" :disabled="pending" @click="$emit('register')">
-          Register
-        </button>
-      </div>
+        <div class="d-flex gap-2">
+          <button
+            type="submit"
+            class="btn btn-primary flex-fill"
+            :disabled="pending"
+          >
+            {{ pending ? 'Logging in...' : 'Login' }}
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-secondary flex-fill"
+            :disabled="pending"
+            @click="$emit('register')"
+          >
+            Register
+          </button>
+        </div>
+      </form>
+
       <button
         type="button"
         class="btn btn-outline-primary mt-3"
@@ -71,6 +103,7 @@ const pending = ref(false)
 
 const login = async () => {
   if (pending.value) return
+
   errorMessage.value = ''
 
   if (username.value.trim() === '' && password.value.trim() === '') {
@@ -89,13 +122,22 @@ const login = async () => {
   }
 
   pending.value = true
+
   try {
-    const user = await props.authenticate(username.value.trim(), password.value)
+    const user = await props.authenticate(
+      username.value.trim(),
+      password.value
+    )
+
     emit('login-success', user)
+
     username.value = ''
     password.value = ''
   } catch (error) {
-    errorMessage.value = error.message
+    errorMessage.value =
+      error instanceof Error
+        ? error.message
+        : 'Login failed. Please try again.'
   } finally {
     pending.value = false
   }

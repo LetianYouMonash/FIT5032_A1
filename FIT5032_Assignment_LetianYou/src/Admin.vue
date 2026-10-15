@@ -6,12 +6,22 @@
         <h1>Administrator</h1>
         <p class="text-muted mb-0">Manage registered accounts.</p>
       </div>
-      <button class="btn btn-primary" @click="$emit('back-home')">
+
+      <button
+        type="button"
+        class="btn btn-primary"
+        @click="$emit('back-home')"
+      >
         Back to Home
       </button>
     </div>
 
-    <div v-if="message" class="alert" :class="messageType" role="alert">
+    <div
+      v-if="message"
+      class="alert"
+      :class="messageType"
+      :role="messageType === 'alert-danger' ? 'alert' : 'status'"
+    >
       {{ message }}
     </div>
 
@@ -21,7 +31,10 @@
 
         <div class="row g-2 mb-3">
           <div class="col-12 col-md-4">
-            <label for="searchColumn" class="form-label">Search Column</label>
+            <label for="searchColumn" class="form-label">
+              Search Column
+            </label>
+
             <select
               id="searchColumn"
               v-model="searchColumn"
@@ -35,7 +48,10 @@
           </div>
 
           <div class="col-12 col-md-8">
-            <label for="searchInput" class="form-label">Search Users</label>
+            <label for="searchInput" class="form-label">
+              Search Users
+            </label>
+
             <input
               id="searchInput"
               v-model="searchQuery"
@@ -60,7 +76,10 @@
               <tr>
                 <th scope="col">Avatar</th>
 
-                <th scope="col" :aria-sort="ariaSort('username')">
+                <th
+                  scope="col"
+                  :aria-sort="ariaSort('username')"
+                >
                   <button
                     type="button"
                     class="btn btn-link text-dark text-decoration-none fw-bold p-0"
@@ -70,7 +89,10 @@
                   </button>
                 </th>
 
-                <th scope="col" :aria-sort="ariaSort('email')">
+                <th
+                  scope="col"
+                  :aria-sort="ariaSort('email')"
+                >
                   <button
                     type="button"
                     class="btn btn-link text-dark text-decoration-none fw-bold p-0"
@@ -80,7 +102,10 @@
                   </button>
                 </th>
 
-                <th scope="col" :aria-sort="ariaSort('role')">
+                <th
+                  scope="col"
+                  :aria-sort="ariaSort('role')"
+                >
                   <button
                     type="button"
                     class="btn btn-link text-dark text-decoration-none fw-bold p-0"
@@ -95,7 +120,10 @@
             </thead>
 
             <tbody>
-              <tr v-for="account in paginatedAccounts" :key="account.id">
+              <tr
+                v-for="account in paginatedAccounts"
+                :key="account.id"
+              >
                 <td>
                   <div
                     class="rounded-circle bg-light border d-flex align-items-center justify-content-center"
@@ -144,16 +172,23 @@
                     v-if="account.role !== 'admin'"
                     type="button"
                     class="btn btn-outline-danger btn-sm"
+                    :aria-label="`Delete account ${account.username}`"
                     @click="remove(account.id)"
                   >
                     Delete
                   </button>
-                  <span v-else class="text-muted">Protected</span>
+
+                  <span v-else class="text-muted">
+                    Protected
+                  </span>
                 </td>
               </tr>
 
               <tr v-if="paginatedAccounts.length === 0">
-                <td colspan="5" class="text-center text-muted py-4">
+                <td
+                  colspan="5"
+                  class="text-center text-muted py-4"
+                >
                   No matching users found.
                 </td>
               </tr>
@@ -164,14 +199,22 @@
         <div
           class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 mt-3"
         >
-          <p class="text-muted mb-0">
+          <p
+            class="text-muted mb-0"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
             Showing {{ startRow }}–{{ endRow }} of
             {{ filteredAccounts.length }} users
           </p>
 
           <nav aria-label="User table pagination">
             <ul class="pagination mb-0">
-              <li class="page-item" :class="{ disabled: currentPage === 1 }">
+              <li
+                class="page-item"
+                :class="{ disabled: currentPage === 1 }"
+              >
                 <button
                   type="button"
                   class="page-link"
@@ -191,7 +234,9 @@
                 <button
                   type="button"
                   class="page-link"
-                  :aria-current="currentPage === page ? 'page' : undefined"
+                  :aria-current="
+                    currentPage === page ? 'page' : undefined
+                  "
                   @click="currentPage = page"
                 >
                   {{ page }}
@@ -223,20 +268,29 @@
 import { computed, ref, watch } from 'vue'
 
 const props = defineProps({
-  getAccounts: { type: Function, required: true },
-  deleteAccount: { type: Function, required: true },
+  getAccounts: {
+    type: Function,
+    required: true,
+  },
+  deleteAccount: {
+    type: Function,
+    required: true,
+  },
 })
 
 defineEmits(['back-home'])
 
 const accounts = ref(props.getAccounts())
+
 const message = ref('')
 const messageType = ref('alert-success')
 
 const searchColumn = ref('all')
 const searchQuery = ref('')
+
 const sortColumn = ref('username')
 const sortDirection = ref('asc')
+
 const currentPage = ref(1)
 const pageSize = 10
 
@@ -248,7 +302,9 @@ const filteredAccounts = computed(() => {
 
     if (searchColumn.value === 'all') {
       return ['username', 'email', 'role'].some((column) =>
-        String(account[column] ?? '').toLowerCase().includes(query)
+        String(account[column] ?? '')
+          .toLowerCase()
+          .includes(query)
       )
     }
 
@@ -266,17 +322,26 @@ const filteredAccounts = computed(() => {
       numeric: true,
     })
 
-    return sortDirection.value === 'asc' ? comparison : -comparison
+    return sortDirection.value === 'asc'
+      ? comparison
+      : -comparison
   })
 })
 
 const totalPages = computed(() =>
-  Math.max(1, Math.ceil(filteredAccounts.value.length / pageSize))
+  Math.max(
+    1,
+    Math.ceil(filteredAccounts.value.length / pageSize)
+  )
 )
 
 const paginatedAccounts = computed(() => {
   const start = (currentPage.value - 1) * pageSize
-  return filteredAccounts.value.slice(start, start + pageSize)
+
+  return filteredAccounts.value.slice(
+    start,
+    start + pageSize
+  )
 })
 
 const startRow = computed(() =>
@@ -286,7 +351,10 @@ const startRow = computed(() =>
 )
 
 const endRow = computed(() =>
-  Math.min(currentPage.value * pageSize, filteredAccounts.value.length)
+  Math.min(
+    currentPage.value * pageSize,
+    filteredAccounts.value.length
+  )
 )
 
 watch([searchQuery, searchColumn], () => {
@@ -301,22 +369,28 @@ watch(totalPages, (pages) => {
 
 const sortBy = (column) => {
   if (sortColumn.value === column) {
-    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
+    sortDirection.value =
+      sortDirection.value === 'asc' ? 'desc' : 'asc'
   } else {
     sortColumn.value = column
     sortDirection.value = 'asc'
   }
+
   currentPage.value = 1
 }
 
 const sortIndicator = (column) => {
   if (sortColumn.value !== column) return '↕'
+
   return sortDirection.value === 'asc' ? '↑' : '↓'
 }
 
 const ariaSort = (column) => {
   if (sortColumn.value !== column) return 'none'
-  return sortDirection.value === 'asc' ? 'ascending' : 'descending'
+
+  return sortDirection.value === 'asc'
+    ? 'ascending'
+    : 'descending'
 }
 
 const remove = (id) => {
@@ -325,11 +399,16 @@ const remove = (id) => {
   try {
     props.deleteAccount(id)
     accounts.value = props.getAccounts()
+
     messageType.value = 'alert-success'
     message.value = 'Account deleted.'
   } catch (error) {
     messageType.value = 'alert-danger'
-    message.value = error instanceof Error ? error.message : 'Unable to delete account.'
+
+    message.value =
+      error instanceof Error
+        ? error.message
+        : 'Unable to delete account.'
   }
 }
 </script>

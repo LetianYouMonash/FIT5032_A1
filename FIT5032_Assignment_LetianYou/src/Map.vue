@@ -115,15 +115,38 @@
       role="status"
     >
       <strong>Route Information</strong>
-      <div>Distance: {{ routeInfo.distance }} km</div>
-      <div>Estimated driving time: {{ routeInfo.duration }} minutes</div>
+
+      <div>
+        Starting point: {{ startPointLabel }}
+      </div>
+
+      <div>
+        Destination: {{ destination.name }}
+      </div>
+
+      <div>
+        Distance: {{ routeInfo.distance }} km
+      </div>
+
+      <div>
+        Estimated driving time: {{ routeInfo.duration }} minutes
+      </div>
     </div>
 
     <div
       ref="mapElement"
       class="map-container"
+      role="region"
       aria-label="Interactive location map"
+      aria-describedby="map-description"
     ></div>
+
+    <p id="map-description" class="visually-hidden">
+      Interactive map showing the selected destination and driving route.
+      Use the search field to find a destination.
+      Use the Plan Route button to calculate a driving route.
+      Route distance and estimated driving time are provided as text above the map.
+    </p>
 
     <p class="small text-muted mt-2">
       Map data © OpenStreetMap contributors.
@@ -169,6 +192,7 @@ let destinationMarker = null
 let startMarker = null
 let routeLayer = null
 let startPoint = { ...MELBOURNE }
+const startPointLabel = ref('Melbourne CBD (default starting point)')
 
 function clearMessages() {
   errorMessage.value = ''
@@ -292,9 +316,11 @@ function useMyLocation() {
   navigator.geolocation.getCurrentPosition(
     (position) => {
       startPoint = {
-        lat: position.coords.latitude,
-        lng: position.coords.longitude,
-      }
+      lat: position.coords.latitude,
+      lng: position.coords.longitude,
+    }
+
+    startPointLabel.value = 'Your current location'
 
       if (map) {
         startMarker = addMarker(
