@@ -34,6 +34,12 @@
       </div>
 
       <div class="col-12 col-md">
+        <button class="btn btn-outline-primary w-100" @click="$emit('change-page', 'email')">
+          Email a resource
+        </button>
+      </div>
+
+      <div class="col-12 col-md">
         <button class="btn btn-outline-primary w-100" @click="$emit('change-page', 'profile')">
           Profile
         </button>

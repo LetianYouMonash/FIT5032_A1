@@ -1,10 +1,11 @@
 {
-  "name": "fit5032-a1-letianyou",
+  "name": "fit5032-assignment-letianyou",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "server": "node --env-file-if-exists=.env.server.local server/index.js",
     "build": "vite build",
     "preview": "vite preview",
     "format": "prettier --write --experimental-cli src/"
@@ -12,6 +13,7 @@
   "dependencies": {
     "bootstrap": "^5.3.8",
     "firebase": "^13.0.0",
+    "firebase-admin": "^14.5.0",
     "vue": "^3.5.40"
   },
   "devDependencies": {

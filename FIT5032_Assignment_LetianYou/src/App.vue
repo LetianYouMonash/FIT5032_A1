@@ -43,6 +43,12 @@
 
   <News v-else-if="currentUser && currentPage === 'news'" @back-home="currentPage = 'home'" />
 
+  <Email
+    v-else-if="currentUser && currentPage === 'email'"
+    :current-user="currentUser"
+    @back-home="currentPage = 'home'"
+  />
+
   <Profile
     v-else-if="currentUser && currentPage === 'profile'"
     :current-user="currentUser"
@@ -82,6 +88,7 @@ import Recycling from './Recycling.vue'
 import Map from './Map.vue'
 import Learn from './Learn.vue'
 import News from './News.vue'
+import Email from './Email.vue'
 import Profile from './Profile.vue'
 import Admin from './Admin.vue'
 import { getRatingSummary, getUserRating, saveRating } from './ratings.js'
@@ -134,7 +141,7 @@ const loginSuccess = (user) => {
 }
 
 const changePage = (page) => {
-  const publicPages = ['home', 'recycling', 'map', 'learn', 'news', 'profile']
+  const publicPages = ['home', 'recycling', 'map', 'learn', 'news', 'profile', 'email']
   const allowed =
     publicPages.includes(page) || (page === 'admin' && currentUser.value?.role === 'admin')
   currentPage.value = currentUser.value && allowed ? page : currentUser.value ? 'home' : 'login'

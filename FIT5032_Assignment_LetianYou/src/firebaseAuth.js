@@ -78,6 +78,12 @@ export async function firebaseLogout() {
   if (auth) await signOut(auth)
 }
 
+export async function firebaseToken() {
+  const client = await service()
+  if (!client.currentUser) throw new Error('Please sign in with Firebase to send email.')
+  return client.currentUser.getIdToken()
+}
+
 export async function observeFirebase(callback, onError) {
   if (!firebaseConfigured) {
     callback(null)
