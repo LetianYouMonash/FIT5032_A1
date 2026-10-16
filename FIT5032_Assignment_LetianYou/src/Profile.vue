@@ -10,14 +10,6 @@
           View and manage your account information and security details.
         </p>
       </div>
-
-      <button
-        type="button"
-        class="btn btn-primary"
-        @click="$emit('back-home')"
-      >
-        Back to Home
-      </button>
     </div>
 
     <template v-if="currentUser">

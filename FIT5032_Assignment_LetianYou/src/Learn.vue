@@ -8,14 +8,6 @@
           Learn how to reduce waste and recycle correctly.
         </p>
       </div>
-
-      <button
-        type="button"
-        class="btn btn-primary"
-        @click="$emit('back-home')"
-      >
-        Back to Home
-      </button>
     </div>
 
     <!-- Introduction -->

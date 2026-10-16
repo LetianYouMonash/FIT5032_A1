@@ -309,19 +309,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Back Button -->
-      <div class="mt-4">
-        <button
-          type="button"
-          class="btn btn-outline-secondary"
-          :disabled="pending"
-          @click="$emit('back-home')"
-        >
-          ← Back to Home
-        </button>
-      </div>
-
     </div>
   </div>
 </template>

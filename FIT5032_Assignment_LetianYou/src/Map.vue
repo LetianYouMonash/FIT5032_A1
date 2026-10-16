@@ -153,15 +153,6 @@
       Search powered by Nominatim.
       Routing powered by OSRM.
     </p>
-
-    <div class="text-center mt-4">
-      <button
-        class="btn btn-primary"
-        @click="$emit('back-home')"
-      >
-        Back to Home
-      </button>
-    </div>
   </div>
 </template>
 

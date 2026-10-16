@@ -8,14 +8,6 @@
           Explore environmental news, sustainability and recycling developments.
         </p>
       </div>
-
-      <button
-        type="button"
-        class="btn btn-primary"
-        @click="$emit('back-home')"
-      >
-        Back to Home
-      </button>
     </div>
 
     <section class="mb-4" aria-labelledby="news-intro">

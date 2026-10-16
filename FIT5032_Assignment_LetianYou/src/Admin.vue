@@ -6,10 +6,6 @@
         <h1>Administrator</h1>
         <p class="text-muted mb-0">Manage registered accounts.</p>
       </div>
-
-      <button type="button" class="btn btn-primary" @click="$emit('back-home')">
-        Back to Home
-      </button>
     </div>
 
     <div
