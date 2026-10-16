@@ -4,7 +4,10 @@ async function request(path, method = 'GET') {
   const token = await firebaseToken()
   let response
   try {
-    response = await fetch(path, {
+    const url = new URL(path, window.location.origin)
+    url.searchParams.set('_request', crypto.randomUUID())
+    response = await fetch(url, {
+      cache: 'no-store',
       method,
       headers: { Authorization: `Bearer ${token}` },
       signal: AbortSignal.timeout(20000),
@@ -16,7 +19,7 @@ async function request(path, method = 'GET') {
   try {
     data = await response.json()
   } catch {
-    throw new Error('The account service is unavailable. Please contact the administrator.')
+    throw new Error(`Unable to load accounts (HTTP ${response.status}; unexpected response). Please refresh and try again.`)
   }
   if (!response.ok) throw new Error(data.message || 'Unable to manage accounts.')
   return data

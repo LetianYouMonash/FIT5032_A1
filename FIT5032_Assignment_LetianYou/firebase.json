@@ -1,4 +1,3 @@
-
 {
   "hosting": {
     "public": "dist",
@@ -9,6 +8,27 @@
     ],
     "rewrites": [
       {
+        "source": "/api/ratings",
+        "function": {
+          "functionId": "accountApi",
+          "region": "australia-southeast1"
+        }
+      },
+      {
+        "source": "/api/accounts",
+        "function": {
+          "functionId": "accountApi",
+          "region": "australia-southeast1"
+        }
+      },
+      {
+        "source": "/api/accounts/**",
+        "function": {
+          "functionId": "accountApi",
+          "region": "australia-southeast1"
+        }
+      },
+      {
         "source": "/api/email",
         "function": {
           "functionId": "sendEmail",
@@ -18,6 +38,17 @@
       {
         "source": "**",
         "destination": "/index.html"
+      }
+    ],
+    "headers": [
+      {
+        "source": "/api/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "private, no-store, max-age=0"
+          }
+        ]
       }
     ]
   },
@@ -34,5 +65,9 @@
         "*.local"
       ]
     }
-  ]
+  ],
+  "firestore": {
+    "database": "letianyou",
+    "rules": "firestore.rules"
+  }
 }

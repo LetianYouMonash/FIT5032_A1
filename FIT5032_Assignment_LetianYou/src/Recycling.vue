@@ -260,7 +260,6 @@
     <RatingCard
       :current-user="currentUser"
       :get-rating-summary="getRatingSummary"
-      :get-user-rating="getUserRating"
       :save-rating="saveRating"
     />
 
@@ -285,7 +284,6 @@ import RatingCard from './RatingCard.vue'
 defineProps({
   currentUser: { type: Object, required: true },
   getRatingSummary: { type: Function, required: true },
-  getUserRating: { type: Function, required: true },
   saveRating: { type: Function, required: true },
 })
 

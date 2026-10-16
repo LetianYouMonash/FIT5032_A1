@@ -2,6 +2,8 @@ import { createServer } from 'node:http'
 import { pathToFileURL } from 'node:url'
 import { initializeApp } from 'firebase-admin/app'
 import { getAuth } from 'firebase-admin/auth'
+import { getFirestore } from 'firebase-admin/firestore'
+import ratingsModule from '../functions/ratings.cjs'
 import { MailError, validateMail, sendMail } from './mail.js'
 import { accountHandler } from './accounts.js'
 
@@ -34,6 +36,7 @@ export function createMailServer({
   deliver = sendMail,
   now = Date.now,
   handleAccounts,
+  handleRatings,
 }) {
   const attempts = new Map()
   let total = { start: now(), count: 0 }
@@ -43,6 +46,7 @@ export function createMailServer({
     { requestTimeout: 30000, headersTimeout: 10000 },
     async (request, response) => {
       try {
+        if (handleRatings && (await handleRatings(request, response))) return
         if (handleAccounts && (await handleAccounts(request, response))) return
         if (request.url !== '/api/email') throw new MailError(404, 'Not found.')
         if (request.method !== 'POST') throw new MailError(405, 'Use POST to send email.')
@@ -128,10 +132,12 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     from: process.env.SENDGRID_FROM_EMAIL,
   }
   const auth = config.projectId ? getAuth(initializeApp({ projectId: config.projectId })) : null
+  const ratings = ratingsModule.ratingService(getFirestore(process.env.FIRESTORE_DATABASE_ID || 'letianyou'), auth)
   const server = createMailServer({
     config,
     verifyToken: (token) => auth.verifyIdToken(token),
-    handleAccounts: accountHandler(auth),
+    handleAccounts: accountHandler(auth, ratings),
+    handleRatings: ratingsModule.ratingHandler(auth, ratings),
   })
   const port = Number(process.env.PORT || 3001)
   const host = process.env.HOST || '127.0.0.1'

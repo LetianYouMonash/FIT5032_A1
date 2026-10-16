@@ -44,7 +44,12 @@ To configure account management:
 4. Restart `npm run server`, then sign out and sign in again on the website to refresh role claims.
 5. Confirm the administrator can list users and an ordinary account cannot access administrator APIs.
 
-Firebase sessions persist across refreshes in the current tab. Ratings still use browser local storage and are not synchronized between devices. Deleting a cloud account does not yet remove that user's stored ratings. Account migration does not migrate local passwords or ratings.
+Firebase sessions persist across refreshes in the current tab. Ratings use the letianyou Cloud Firestore database, in the applicationRatings collection. Each Firebase UID has one score for the Recycling & Reuse guide; submitting again replaces it. The API computes the mean of all existing accounts' ratings, rounded to one decimal place. Accounts without a rating are excluded. The page refreshes every 15 seconds, on window focus, and after submitting.
+
+Deleting an account through the application first blocks further ratings and removes its ratings, then deletes the Authentication account. If deletion fails, retry the account deletion; its ratings remain removed. Ratings belonging to accounts deleted directly in the Firebase console are excluded and cleaned up on the next ratings request. Old browser-local ratings are not imported.
+
+Use the named Firestore database letianyou in australia-southeast2 (Melbourne), in Production mode. Set FIRESTORE_DATABASE_ID=letianyou in .env.server.local and grant the backend service account Firestore access. These collections must not allow client writes: all access goes through the authenticated backend. Existing project-wide Firestore rules should be reviewed before deployment, especially broad test-mode rules. Local development uses the existing Node API. Firebase Hosting deployment additionally requires deploying accountApi and the updated hosting rewrites.
+
 
 ## Email attachments
 

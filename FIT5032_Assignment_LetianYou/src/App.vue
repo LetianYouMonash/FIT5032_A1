@@ -25,7 +25,6 @@
       v-else-if="currentUser && currentPage === 'recycling'"
       :current-user="currentUser"
       :get-rating-summary="ratingService.getRatingSummary"
-      :get-user-rating="ratingService.getUserRating"
       :save-rating="ratingService.saveRating"
       @back-home="currentPage = 'home'"
     />
@@ -66,11 +65,11 @@ import {
   observeFirebase,
   firebaseLogout,
   firebaseError,
-  firebaseRatingStore,
 } from './firebaseAuth.js'
 
 import { getAccounts, deleteAccount } from './accountsApi.js'
 
+import { ratingService } from './ratingsApi.js'
 import Home from './Home.vue'
 import Recycling from './Recycling.vue'
 import Map from './Map.vue'
@@ -87,9 +86,7 @@ const sessionError = ref('')
 const mainElement = ref(null)
 const pageAnnouncement = ref('')
 
-const cloudRatings = firebaseRatingStore()
 
-const ratingService = cloudRatings
 
 const pageNames = {
   login: 'Login',

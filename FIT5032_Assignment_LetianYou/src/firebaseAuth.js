@@ -80,7 +80,7 @@ export async function firebaseLogout() {
 
 export async function firebaseToken() {
   const client = await service()
-  if (!client.currentUser) throw new Error('Please sign in with Firebase to send email.')
+  if (!client.currentUser) throw new Error('Please sign in again.')
   return client.currentUser.getIdToken()
 }
 
@@ -114,42 +114,3 @@ export async function observeFirebase(callback, onError) {
   }
 }
 
-// Ratings are stored in this browser and separated by Firebase project.
-export function firebaseRatingStore() {
-  const key = `fit5032.firebase-ratings.${config.projectId}.v1`
-  const read = () => {
-    const rows = JSON.parse(localStorage.getItem(key) || '[]')
-    if (!Array.isArray(rows)) throw new Error('Saved ratings could not be read.')
-    return rows.filter(
-      (row) =>
-        row &&
-        typeof row.userId === 'string' &&
-        Number.isInteger(row.score) &&
-        row.score >= 1 &&
-        row.score <= 5,
-    )
-  }
-  return {
-    getRatingSummary(itemId) {
-      const rows = read().filter((row) => row.itemId === itemId)
-      return {
-        count: rows.length,
-        average: rows.length
-          ? Number((rows.reduce((sum, row) => sum + row.score, 0) / rows.length).toFixed(1))
-          : 0,
-      }
-    },
-    getUserRating(itemId, userId) {
-      return read().find((row) => row.itemId === itemId && row.userId === userId)?.score || 0
-    },
-    saveRating(itemId, userId, score) {
-      if (!auth?.currentUser || auth.currentUser.uid !== userId)
-        throw new Error('Please log in before rating.')
-      if (!Number.isInteger(score) || score < 1 || score > 5)
-        throw new Error('Please choose a rating from 1 to 5.')
-      const rows = read().filter((row) => !(row.itemId === itemId && row.userId === userId))
-      rows.push({ itemId, userId, score })
-      localStorage.setItem(key, JSON.stringify(rows))
-    },
-  }
-}

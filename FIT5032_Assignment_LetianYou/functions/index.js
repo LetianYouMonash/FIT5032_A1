@@ -295,3 +295,16 @@ exports.sendEmail = onRequest(
     }
   }
 )
+
+const { getFirestore } = require('firebase-admin/firestore')
+const { ratingService, ratingHandler } = require('./ratings.cjs')
+const cloudRatings = ratingService(getFirestore('letianyou'), getAuth())
+exports.accountApi = onRequest(
+  { region: 'australia-southeast1', maxInstances: 2, timeoutSeconds: 60 },
+  async (request, response) => {
+    const { accountHandler } = await import('./accounts.mjs')
+    if (await ratingHandler(getAuth(), cloudRatings)(request, response)) return
+    if (await accountHandler(getAuth(), cloudRatings)(request, response)) return
+    response.status(404).json({ message: 'Not found.' })
+  },
+)
