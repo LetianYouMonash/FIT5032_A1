@@ -32,12 +32,19 @@ Restart the development server after changing `.env.local`.
 
 ## Accounts and ratings
 
-- Local accounts are stored in browser local storage. The first local account is assigned the administrator role. The admin panel manages local accounts only.
-- Firebase accounts use email/password authentication and have the user role in this application. Manage these accounts through Firebase Console.
-- Local roles are not server-enforced authorization. Cloud data requires server-side access controls.
-- Firebase sessions persist across refreshes in the current tab.
-- Ratings remain in browser local storage. Local and Firebase ratings are stored separately; ratings are not synchronized between devices.
-- Deleting a local account removes its local ratings. Deleting a Firebase account in the console does not automatically remove its browser-stored ratings.
+All application sign-in and registration use Firebase Authentication. Existing browser-local account data is retained but is no longer used for access. Firebase accounts are not automatically created from old local accounts.
+
+Administrator roles use the Firebase custom claim `admin: true`. New registrations are ordinary users. The backend checks both a verified, non-revoked ID token and the current account role before listing or deleting users. Administrator accounts cannot be deleted through the application.
+
+To configure account management:
+
+1. Save a Firebase service account JSON outside the repository. It must belong to the configured Firebase project and have permissions to manage Firebase Authentication users.
+2. Set `GOOGLE_APPLICATION_CREDENTIALS` in `.env.server.local` to its absolute path (forward slashes are accepted on Windows). Never put this credential in a `VITE_` variable.
+3. Run `npm run admin:grant -- letianyou@gmail.com` once to assign the selected existing account. The script preserves other custom claims.
+4. Restart `npm run server`, then sign out and sign in again on the website to refresh role claims.
+5. Confirm the administrator can list users and an ordinary account cannot access administrator APIs.
+
+Firebase sessions persist across refreshes in the current tab. Ratings still use browser local storage and are not synchronized between devices. Deleting a cloud account does not yet remove that user's stored ratings. Account migration does not migrate local passwords or ratings.
 
 ## Email attachments
 
@@ -54,7 +61,7 @@ The API limits each account to five sending attempts per hour, at least one minu
 
 The server verifies token signatures, expiry and project identity. This verification does not immediately detect revoked sessions or deleted accounts; an already-issued token may remain valid until expiry. It does not grant account administration permissions.
 
-Vite proxies `/api` to `http://127.0.0.1:3001` during development and preview. The API is a separate service and is not included in `dist`. For deployment, run the API on a server and route `/api` to it over HTTPS. Static hosting alone cannot send these emails. No service account private key is used for the current signature-verification-only flow.
+Vite proxies `/api` to `http://127.0.0.1:3001` during development and preview. The API is a separate service and is not included in `dist`. For deployment, run the API on a server and route `/api` to it over HTTPS. Static hosting alone cannot send these emails. The account management routes require service account credentials; the mail route uses token signature verification.
 
 References: [SendGrid Mail Send API](https://www.twilio.com/docs/sendgrid/api-reference/mail-send/mail-send), [Firebase ID token verification](https://firebase.google.com/docs/auth/admin/verify-id-tokens).
 

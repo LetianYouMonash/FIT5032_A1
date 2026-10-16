@@ -1,25 +1,14 @@
-
 <template>
   <div class="container d-flex align-items-center justify-content-center min-vh-100">
-    <form
-      class="card p-4 w-100"
-      style="max-width: 440px"
-      novalidate
-      @submit.prevent="submit"
-    >
+    <form class="card p-4 w-100" style="max-width: 440px" novalidate @submit.prevent="submit">
       <h1 class="h3">
-        {{ registering ? 'Create Firebase account' : 'Firebase login' }}
+        {{ registering ? 'Create an account' : 'Log in' }}
       </h1>
 
       <p>Sign in with your email and password.</p>
 
-      <p
-        v-if="!firebaseConfigured"
-        class="alert alert-warning"
-        role="status"
-      >
-        Firebase login has not been configured yet.
-        Local login is still available.
+      <p v-if="!firebaseConfigured" class="alert alert-warning" role="status">
+        Account access has not been configured yet.
       </p>
 
       <p class="visually-hidden" role="status" aria-live="polite">
@@ -31,9 +20,7 @@
           {{ registering ? 'Firebase registration details' : 'Firebase login details' }}
         </legend>
 
-        <label for="firebase-email" class="form-label">
-          Email
-        </label>
+        <label for="firebase-email" class="form-label"> Email </label>
 
         <input
           id="firebase-email"
@@ -47,9 +34,7 @@
           :aria-describedby="invalidField === 'email' ? 'firebase-error' : undefined"
         />
 
-        <label for="firebase-password" class="form-label">
-          Password
-        </label>
+        <label for="firebase-password" class="form-label"> Password </label>
 
         <input
           id="firebase-password"
@@ -63,32 +48,16 @@
           :aria-describedby="passwordDescription"
         />
 
-        <p
-          v-if="registering"
-          id="firebase-password-help"
-          class="small text-muted"
-        >
-          At least 6 characters, with uppercase, lowercase,
-          a number and a symbol.
+        <p v-if="registering" id="firebase-password-help" class="small text-muted">
+          At least 6 characters, with uppercase, lowercase, a number and a symbol.
         </p>
 
         <button type="submit" class="btn btn-primary w-100">
-          {{
-            pending
-              ? 'Please wait...'
-              : registering
-                ? 'Register and sign in'
-                : 'Log in'
-          }}
+          {{ pending ? 'Please wait...' : registering ? 'Register and sign in' : 'Log in' }}
         </button>
       </fieldset>
 
-      <p
-        v-if="error"
-        id="firebase-error"
-        class="text-danger mt-3"
-        role="alert"
-      >
+      <p v-if="error" id="firebase-error" class="text-danger mt-3" role="alert">
         {{ error }}
       </p>
 
@@ -96,26 +65,8 @@
         Processing Firebase authentication, please wait.
       </p>
 
-      <button
-        type="button"
-        class="btn btn-link mt-2"
-        :disabled="pending"
-        @click="toggle"
-      >
-        {{
-          registering
-            ? 'Already registered? Log in'
-            : 'Create an account'
-        }}
-      </button>
-
-      <button
-        type="button"
-        class="btn btn-outline-secondary"
-        :disabled="pending"
-        @click="$emit('back')"
-      >
-        Back to local login
+      <button type="button" class="btn btn-link mt-2" :disabled="pending" @click="toggle">
+        {{ registering ? 'Already registered? Log in' : 'Create an account' }}
       </button>
     </form>
   </div>
@@ -123,14 +74,10 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import {
-  firebaseConfigured,
-  firebaseLogin,
-  firebaseError,
-} from './firebaseAuth.js'
+import { firebaseConfigured, firebaseLogin, firebaseError } from './firebaseAuth.js'
 import { validateRegistration } from './validation.js'
 
-const emit = defineEmits(['back', 'login-success'])
+const emit = defineEmits(['login-success'])
 
 const email = ref('')
 const password = ref('')
@@ -211,11 +158,7 @@ async function submit() {
   pending.value = true
 
   try {
-    const user = await firebaseLogin(
-      email.value,
-      password.value,
-      registering.value
-    )
+    const user = await firebaseLogin(email.value, password.value, registering.value)
 
     password.value = ''
     emit('login-success', user)

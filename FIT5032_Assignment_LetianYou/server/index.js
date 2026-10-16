@@ -3,6 +3,7 @@ import { pathToFileURL } from 'node:url'
 import { initializeApp } from 'firebase-admin/app'
 import { getAuth } from 'firebase-admin/auth'
 import { MailError, validateMail, sendMail } from './mail.js'
+import { accountHandler } from './accounts.js'
 
 const MAX_BODY_BYTES = 3 * 1024 * 1024
 
@@ -27,7 +28,13 @@ async function readBody(request) {
   }
 }
 
-export function createMailServer({ config, verifyToken, deliver = sendMail, now = Date.now }) {
+export function createMailServer({
+  config,
+  verifyToken,
+  deliver = sendMail,
+  now = Date.now,
+  handleAccounts,
+}) {
   const attempts = new Map()
   let total = { start: now(), count: 0 }
   const hour = 60 * 60 * 1000
@@ -36,6 +43,7 @@ export function createMailServer({ config, verifyToken, deliver = sendMail, now 
     { requestTimeout: 30000, headersTimeout: 10000 },
     async (request, response) => {
       try {
+        if (handleAccounts && (await handleAccounts(request, response))) return
         if (request.url !== '/api/email') throw new MailError(404, 'Not found.')
         if (request.method !== 'POST') throw new MailError(405, 'Use POST to send email.')
         if (!config.projectId || !config.apiKey || !config.from) {
@@ -120,7 +128,11 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     from: process.env.SENDGRID_FROM_EMAIL,
   }
   const auth = config.projectId ? getAuth(initializeApp({ projectId: config.projectId })) : null
-  const server = createMailServer({ config, verifyToken: (token) => auth.verifyIdToken(token) })
+  const server = createMailServer({
+    config,
+    verifyToken: (token) => auth.verifyIdToken(token),
+    handleAccounts: accountHandler(auth),
+  })
   const port = Number(process.env.PORT || 3001)
   const host = process.env.HOST || '127.0.0.1'
   server.listen(port, host, () => console.info(`Mail API listening on http://${host}:${port}`))

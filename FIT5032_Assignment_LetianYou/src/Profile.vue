@@ -6,6 +6,7 @@
       <p>Username: {{ currentUser.username }}</p>
 
       <p>Email: {{ currentUser.email }}</p>
+      <p>Role: {{ currentUser.role }}</p>
       <p>
         Account provider:
         {{ currentUser.provider === 'firebase' ? 'Firebase Authentication' : 'Local account' }}

@@ -8,7 +8,8 @@
     "server": "node --env-file-if-exists=.env.server.local server/index.js",
     "build": "vite build",
     "preview": "vite preview",
-    "format": "prettier --write --experimental-cli src/"
+    "format": "prettier --write --experimental-cli src/",
+    "admin:grant": "node --env-file-if-exists=.env.server.local server/grant-admin.js"
   },
   "dependencies": {
     "bootstrap": "^5.3.8",

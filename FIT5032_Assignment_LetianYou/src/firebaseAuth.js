@@ -3,7 +3,7 @@ import {
   getAuth,
   setPersistence,
   browserSessionPersistence,
-  onAuthStateChanged,
+  onIdTokenChanged,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
@@ -34,14 +34,14 @@ async function service() {
   return auth
 }
 
-function profile(user) {
-  // External users are ordinary users. Local storage never grants cloud admin privileges.
+async function profile(user) {
+  const token = user ? await user.getIdTokenResult() : null
   return user
     ? {
         id: user.uid,
         username: user.displayName || user.email,
         email: user.email,
-        role: 'user',
+        role: token.claims.admin === true ? 'admin' : 'user',
         provider: 'firebase',
       }
     : null
@@ -90,7 +90,28 @@ export async function observeFirebase(callback, onError) {
     return () => {}
   }
   const client = await service()
-  return onAuthStateChanged(client, (user) => callback(profile(user)), onError)
+  let active = true
+  let version = 0
+  const stop = onIdTokenChanged(
+    client,
+    async (user) => {
+      const request = ++version
+      try {
+        const value = await profile(user)
+        if (active && request === version) callback(value)
+      } catch (error) {
+        if (active && request === version) {
+          callback(null)
+          onError?.(error)
+        }
+      }
+    },
+    onError,
+  )
+  return () => {
+    active = false
+    stop()
+  }
 }
 
 // Ratings are stored in this browser and separated by Firebase project.

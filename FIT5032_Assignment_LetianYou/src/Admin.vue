@@ -1,5 +1,5 @@
-
 <template>
+  <p v-if="pending" class="container mt-3" role="status">Updating accounts...</p>
   <div class="container py-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <div>
@@ -7,11 +7,7 @@
         <p class="text-muted mb-0">Manage registered accounts.</p>
       </div>
 
-      <button
-        type="button"
-        class="btn btn-primary"
-        @click="$emit('back-home')"
-      >
+      <button type="button" class="btn btn-primary" @click="$emit('back-home')">
         Back to Home
       </button>
     </div>
@@ -31,15 +27,9 @@
 
         <div class="row g-2 mb-3">
           <div class="col-12 col-md-4">
-            <label for="searchColumn" class="form-label">
-              Search Column
-            </label>
+            <label for="searchColumn" class="form-label"> Search Column </label>
 
-            <select
-              id="searchColumn"
-              v-model="searchColumn"
-              class="form-select"
-            >
+            <select id="searchColumn" v-model="searchColumn" class="form-select">
               <option value="all">All Columns</option>
               <option value="username">Username</option>
               <option value="email">Email</option>
@@ -48,9 +38,7 @@
           </div>
 
           <div class="col-12 col-md-8">
-            <label for="searchInput" class="form-label">
-              Search Users
-            </label>
+            <label for="searchInput" class="form-label"> Search Users </label>
 
             <input
               id="searchInput"
@@ -58,9 +46,7 @@
               type="search"
               class="form-control"
               :placeholder="
-                searchColumn === 'all'
-                  ? 'Search all columns...'
-                  : `Search by ${searchColumn}...`
+                searchColumn === 'all' ? 'Search all columns...' : `Search by ${searchColumn}...`
               "
             />
           </div>
@@ -76,10 +62,7 @@
               <tr>
                 <th scope="col">Avatar</th>
 
-                <th
-                  scope="col"
-                  :aria-sort="ariaSort('username')"
-                >
+                <th scope="col" :aria-sort="ariaSort('username')">
                   <button
                     type="button"
                     class="btn btn-link text-dark text-decoration-none fw-bold p-0"
@@ -89,10 +72,7 @@
                   </button>
                 </th>
 
-                <th
-                  scope="col"
-                  :aria-sort="ariaSort('email')"
-                >
+                <th scope="col" :aria-sort="ariaSort('email')">
                   <button
                     type="button"
                     class="btn btn-link text-dark text-decoration-none fw-bold p-0"
@@ -102,10 +82,7 @@
                   </button>
                 </th>
 
-                <th
-                  scope="col"
-                  :aria-sort="ariaSort('role')"
-                >
+                <th scope="col" :aria-sort="ariaSort('role')">
                   <button
                     type="button"
                     class="btn btn-link text-dark text-decoration-none fw-bold p-0"
@@ -120,10 +97,7 @@
             </thead>
 
             <tbody>
-              <tr
-                v-for="account in paginatedAccounts"
-                :key="account.id"
-              >
+              <tr v-for="account in paginatedAccounts" :key="account.id">
                 <td>
                   <div
                     class="rounded-circle bg-light border d-flex align-items-center justify-content-center"
@@ -157,11 +131,7 @@
                 <td>
                   <span
                     class="badge"
-                    :class="
-                      account.role === 'admin'
-                        ? 'text-bg-danger'
-                        : 'text-bg-secondary'
-                    "
+                    :class="account.role === 'admin' ? 'text-bg-danger' : 'text-bg-secondary'"
                   >
                     {{ account.role }}
                   </span>
@@ -173,24 +143,18 @@
                     type="button"
                     class="btn btn-outline-danger btn-sm"
                     :aria-label="`Delete account ${account.username}`"
+                    :disabled="pending"
                     @click="remove(account.id)"
                   >
                     Delete
                   </button>
 
-                  <span v-else class="text-muted">
-                    Protected
-                  </span>
+                  <span v-else class="text-muted"> Protected </span>
                 </td>
               </tr>
 
               <tr v-if="paginatedAccounts.length === 0">
-                <td
-                  colspan="5"
-                  class="text-center text-muted py-4"
-                >
-                  No matching users found.
-                </td>
+                <td colspan="5" class="text-center text-muted py-4">No matching users found.</td>
               </tr>
             </tbody>
           </table>
@@ -199,22 +163,13 @@
         <div
           class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 mt-3"
         >
-          <p
-            class="text-muted mb-0"
-            role="status"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            Showing {{ startRow }}–{{ endRow }} of
-            {{ filteredAccounts.length }} users
+          <p class="text-muted mb-0" role="status" aria-live="polite" aria-atomic="true">
+            Showing {{ startRow }}–{{ endRow }} of {{ filteredAccounts.length }} users
           </p>
 
           <nav aria-label="User table pagination">
             <ul class="pagination mb-0">
-              <li
-                class="page-item"
-                :class="{ disabled: currentPage === 1 }"
-              >
+              <li class="page-item" :class="{ disabled: currentPage === 1 }">
                 <button
                   type="button"
                   class="page-link"
@@ -234,19 +189,14 @@
                 <button
                   type="button"
                   class="page-link"
-                  :aria-current="
-                    currentPage === page ? 'page' : undefined
-                  "
+                  :aria-current="currentPage === page ? 'page' : undefined"
                   @click="currentPage = page"
                 >
                   {{ page }}
                 </button>
               </li>
 
-              <li
-                class="page-item"
-                :class="{ disabled: currentPage === totalPages }"
-              >
+              <li class="page-item" :class="{ disabled: currentPage === totalPages }">
                 <button
                   type="button"
                   class="page-link"
@@ -265,7 +215,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
 
 const props = defineProps({
   getAccounts: {
@@ -280,7 +230,21 @@ const props = defineProps({
 
 defineEmits(['back-home'])
 
-const accounts = ref(props.getAccounts())
+const accounts = ref([])
+const pending = ref(false)
+
+async function loadAccounts() {
+  pending.value = true
+  try {
+    accounts.value = await props.getAccounts()
+  } catch (error) {
+    messageType.value = 'alert-danger'
+    message.value = error.message
+  } finally {
+    pending.value = false
+  }
+}
+onMounted(loadAccounts)
 
 const message = ref('')
 const messageType = ref('alert-success')
@@ -304,7 +268,7 @@ const filteredAccounts = computed(() => {
       return ['username', 'email', 'role'].some((column) =>
         String(account[column] ?? '')
           .toLowerCase()
-          .includes(query)
+          .includes(query),
       )
     }
 
@@ -322,40 +286,23 @@ const filteredAccounts = computed(() => {
       numeric: true,
     })
 
-    return sortDirection.value === 'asc'
-      ? comparison
-      : -comparison
+    return sortDirection.value === 'asc' ? comparison : -comparison
   })
 })
 
-const totalPages = computed(() =>
-  Math.max(
-    1,
-    Math.ceil(filteredAccounts.value.length / pageSize)
-  )
-)
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredAccounts.value.length / pageSize)))
 
 const paginatedAccounts = computed(() => {
   const start = (currentPage.value - 1) * pageSize
 
-  return filteredAccounts.value.slice(
-    start,
-    start + pageSize
-  )
+  return filteredAccounts.value.slice(start, start + pageSize)
 })
 
 const startRow = computed(() =>
-  filteredAccounts.value.length === 0
-    ? 0
-    : (currentPage.value - 1) * pageSize + 1
+  filteredAccounts.value.length === 0 ? 0 : (currentPage.value - 1) * pageSize + 1,
 )
 
-const endRow = computed(() =>
-  Math.min(
-    currentPage.value * pageSize,
-    filteredAccounts.value.length
-  )
-)
+const endRow = computed(() => Math.min(currentPage.value * pageSize, filteredAccounts.value.length))
 
 watch([searchQuery, searchColumn], () => {
   currentPage.value = 1
@@ -369,8 +316,7 @@ watch(totalPages, (pages) => {
 
 const sortBy = (column) => {
   if (sortColumn.value === column) {
-    sortDirection.value =
-      sortDirection.value === 'asc' ? 'desc' : 'asc'
+    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
   } else {
     sortColumn.value = column
     sortDirection.value = 'asc'
@@ -388,27 +334,26 @@ const sortIndicator = (column) => {
 const ariaSort = (column) => {
   if (sortColumn.value !== column) return 'none'
 
-  return sortDirection.value === 'asc'
-    ? 'ascending'
-    : 'descending'
+  return sortDirection.value === 'asc' ? 'ascending' : 'descending'
 }
 
-const remove = (id) => {
+const remove = async (id) => {
+  if (pending.value) return
+  pending.value = true
   message.value = ''
 
   try {
-    props.deleteAccount(id)
-    accounts.value = props.getAccounts()
+    await props.deleteAccount(id)
+    accounts.value = accounts.value.filter((account) => account.id !== id)
 
     messageType.value = 'alert-success'
     message.value = 'Account deleted.'
   } catch (error) {
     messageType.value = 'alert-danger'
 
-    message.value =
-      error instanceof Error
-        ? error.message
-        : 'Unable to delete account.'
+    message.value = error instanceof Error ? error.message : 'Unable to delete account.'
+  } finally {
+    pending.value = false
   }
 }
 </script>

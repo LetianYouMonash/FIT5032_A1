@@ -1,58 +1,18 @@
-
 <template>
-  <a class="skip-link" href="#main-content">
-    Skip to main content
-  </a>
+  <a class="skip-link" href="#main-content"> Skip to main content </a>
 
-  <p
-    v-if="sessionError"
-    class="alert alert-warning m-3"
-    role="alert"
-  >
+  <p v-if="sessionError" class="alert alert-warning m-3" role="alert">
     {{ sessionError }}
   </p>
 
-  <p
-    class="visually-hidden"
-    role="status"
-    aria-live="polite"
-    aria-atomic="true"
-  >
+  <p class="visually-hidden" role="status" aria-live="polite" aria-atomic="true">
     {{ pageAnnouncement }}
   </p>
 
-  <main
-    id="main-content"
-    ref="mainElement"
-    tabindex="-1"
-  >
-    <p
-      v-if="loadingSession"
-      class="container py-5"
-      role="status"
-    >
-      Checking your session...
-    </p>
+  <main id="main-content" ref="mainElement" tabindex="-1">
+    <p v-if="loadingSession" class="container py-5" role="status">Checking your session...</p>
 
-    <Login
-      v-else-if="currentPage === 'login'"
-      :authenticate="authenticate"
-      @register="currentPage = 'register'"
-      @login-success="loginSuccess"
-      @firebase="currentPage = 'firebase'"
-    />
-
-    <FirebaseLogin
-      v-else-if="currentPage === 'firebase'"
-      @back="currentPage = 'login'"
-      @login-success="loginSuccess"
-    />
-
-    <Register
-      v-else-if="currentPage === 'register'"
-      :register-account="registerAccount"
-      @back-login="currentPage = 'login'"
-    />
+    <FirebaseLogin v-else-if="currentPage === 'login'" @login-success="loginSuccess" />
 
     <Home
       v-else-if="currentUser && currentPage === 'home'"
@@ -70,20 +30,11 @@
       @back-home="currentPage = 'home'"
     />
 
-    <Map
-      v-else-if="currentUser && currentPage === 'map'"
-      @back-home="currentPage = 'home'"
-    />
+    <Map v-else-if="currentUser && currentPage === 'map'" @back-home="currentPage = 'home'" />
 
-    <Learn
-      v-else-if="currentUser && currentPage === 'learn'"
-      @back-home="currentPage = 'home'"
-    />
+    <Learn v-else-if="currentUser && currentPage === 'learn'" @back-home="currentPage = 'home'" />
 
-    <News
-      v-else-if="currentUser && currentPage === 'news'"
-      @back-home="currentPage = 'home'"
-    />
+    <News v-else-if="currentUser && currentPage === 'news'" @back-home="currentPage = 'home'" />
 
     <Email
       v-else-if="currentUser && currentPage === 'email'"
@@ -107,14 +58,7 @@
 </template>
 
 <script setup>
-import {
-  ref,
-  computed,
-  onMounted,
-  onUnmounted,
-  watch,
-  nextTick,
-} from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 
 import FirebaseLogin from './FirebaseLogin.vue'
 
@@ -125,17 +69,8 @@ import {
   firebaseRatingStore,
 } from './firebaseAuth.js'
 
-import {
-  registerAccount,
-  authenticate,
-  restoreSession,
-  clearSession,
-  getAccounts,
-  deleteAccount,
-} from './auth.js'
+import { getAccounts, deleteAccount } from './accountsApi.js'
 
-import Login from './Login.vue'
-import Register from './Register.vue'
 import Home from './Home.vue'
 import Recycling from './Recycling.vue'
 import Map from './Map.vue'
@@ -145,14 +80,8 @@ import Email from './Email.vue'
 import Profile from './Profile.vue'
 import Admin from './Admin.vue'
 
-import {
-  getRatingSummary,
-  getUserRating,
-  saveRating,
-} from './ratings.js'
-
-const currentUser = ref(restoreSession())
-const currentPage = ref(currentUser.value ? 'home' : 'login')
+const currentUser = ref(null)
+const currentPage = ref('login')
 const loadingSession = ref(true)
 const sessionError = ref('')
 const mainElement = ref(null)
@@ -160,20 +89,10 @@ const pageAnnouncement = ref('')
 
 const cloudRatings = firebaseRatingStore()
 
-const ratingService = computed(() =>
-  currentUser.value?.provider === 'firebase'
-    ? cloudRatings
-    : {
-        getRatingSummary,
-        getUserRating,
-        saveRating,
-      }
-)
+const ratingService = cloudRatings
 
 const pageNames = {
   login: 'Login',
-  firebase: 'Firebase Login',
-  register: 'Register',
   home: 'Home',
   recycling: 'Recycling',
   map: 'Recycling Location Map',
@@ -184,9 +103,7 @@ const pageNames = {
   admin: 'Admin',
 }
 
-const currentPageName = computed(
-  () => pageNames[currentPage.value] || 'Home'
-)
+const currentPageName = computed(() => pageNames[currentPage.value] || 'Home')
 
 let unsubscribe
 let disposed = false
@@ -199,21 +116,19 @@ watch(
       return
     }
 
-    document.title =
-      `${pageNames[page] || 'Home'} | Recycling Application`
+    document.title = `${pageNames[page] || 'Home'} | Recycling Application`
 
-    pageAnnouncement.value =
-      `${pageNames[page] || 'Home'} page loaded`
+    pageAnnouncement.value = `${pageNames[page] || 'Home'} page loaded`
 
     if (page !== previousPage && !previousLoading) {
-    await nextTick()
+      await nextTick()
 
-    if (!disposed) {
-      mainElement.value?.focus({ preventScroll: true })
+      if (!disposed) {
+        mainElement.value?.focus({ preventScroll: true })
+      }
     }
-  }
   },
-  { immediate: true, flush: 'post' }
+  { immediate: true, flush: 'post' },
 )
 
 onMounted(async () => {
@@ -222,7 +137,7 @@ onMounted(async () => {
       (user) => {
         if (user) {
           loginSuccess(user)
-        } else if (currentUser.value?.provider === 'firebase') {
+        } else {
           currentUser.value = null
           currentPage.value = 'login'
         }
@@ -232,7 +147,7 @@ onMounted(async () => {
       (error) => {
         sessionError.value = firebaseError(error)
         loadingSession.value = false
-      }
+      },
     )
 
     if (disposed) {
@@ -252,39 +167,18 @@ onUnmounted(() => {
 })
 
 const loginSuccess = (user) => {
-  if (user.provider === 'firebase') {
-    clearSession()
-  }
-
   sessionError.value = ''
   currentUser.value = user
   currentPage.value = 'home'
 }
 
 const changePage = (page) => {
-  const publicPages = [
-    'home',
-    'recycling',
-    'map',
-    'learn',
-    'news',
-    'profile',
-    'email',
-  ]
+  const publicPages = ['home', 'recycling', 'map', 'learn', 'news', 'profile', 'email']
 
   const allowed =
-    publicPages.includes(page) ||
-    (
-      page === 'admin' &&
-      currentUser.value?.role === 'admin'
-    )
+    publicPages.includes(page) || (page === 'admin' && currentUser.value?.role === 'admin')
 
-  currentPage.value =
-    currentUser.value && allowed
-      ? page
-      : currentUser.value
-        ? 'home'
-        : 'login'
+  currentPage.value = currentUser.value && allowed ? page : currentUser.value ? 'home' : 'login'
 }
 
 const backToLogin = async () => {
@@ -293,7 +187,6 @@ const backToLogin = async () => {
       await firebaseLogout()
     }
 
-    clearSession()
     currentUser.value = null
     currentPage.value = 'login'
     sessionError.value = ''
@@ -328,14 +221,7 @@ const backToLogin = async () => {
   outline: none;
 }
 
-:where(
-  button,
-  a,
-  input,
-  select,
-  textarea,
-  [tabindex]
-):focus-visible {
+:where(button, a, input, select, textarea, [tabindex]):focus-visible {
   outline: 3px solid #005fcc;
   outline-offset: 3px;
 }
