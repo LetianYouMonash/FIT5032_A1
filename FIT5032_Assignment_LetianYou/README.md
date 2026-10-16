@@ -1,22 +1,50 @@
 # Recycling & Reuse
 
-A Vue 3 application for FIT5032 Assignment 1, using the Composition API, Bootstrap and Firebase Authentication.
+A web application developed for **FIT5032 Assignment**, built with Vue 3, Vite, Bootstrap and Firebase.
 
-## Setup
+The application aims to promote environmental awareness by providing recycling information, educational resources, interactive features and user account management.
 
-Use Node.js 22.18 or later in the 22.x series, or Node.js 24.12 or later.
-Run these commands from this directory, which contains `package.json`:
+## Features
 
-```sh
+- **Firebase Authentication:** Supports user registration, login and logout.
+- **Homepage:** Provides an overview of the application and access to its main features.
+- **Recycling Guide:** Displays recycling information, interactive tables and user ratings.
+- **Interactive Map:** Uses Leaflet to display recycling-related locations.
+- **Learning Centre:** Provides recycling tips and interactive quizzes.
+- **Environmental News:** Allows users to browse, search and filter environmental news.
+- **Email Resource Sharing:** Sends emails with file attachments using SendGrid.
+- **User Profile:** Allows users to view and update account information.
+- **Admin Dashboard:** Supports user account management with role-based access control.
+- **Data Export:** Supports CSV and PDF exports.
+- **Navigation and Accessibility:** Includes responsive navigation, a back-to-top button and accessibility improvements.
+
+## Technologies Used
+
+- Vue 3 (Composition API)
+- Vite
+- JavaScript
+- Bootstrap
+- Firebase Authentication
+- Cloud Firestore
+- Firebase Hosting
+- Firebase Cloud Functions
+- Leaflet
+- Node.js
+- SendGrid API
+
+## Installation
+
+**Requirements:** Node.js 22.18 or later in the 22.x series, or Node.js 24.12 or later.
+
+1. Clone or download the project.
+2. Open the project directory containing `package.json`.
+3. Install dependencies:
+
+```bash
 npm ci
-npm run dev
 ```
 
-Open the local URL printed by Vite.
-
-## Firebase configuration
-
-Copy `.env.example` to `.env.local` and enter the values from your Firebase Web app configuration:
+4. Copy `.env.example` to `.env.local` and configure Firebase:
 
 ```dotenv
 VITE_FIREBASE_API_KEY=
@@ -25,56 +53,76 @@ VITE_FIREBASE_PROJECT_ID=
 VITE_FIREBASE_APP_ID=
 ```
 
-Enable Email/Password in Firebase Console under Authentication. Check that the development and deployed domains are included in Authentication's authorized domains.
-Restart the development server after changing `.env.local`.
+5. Start the development server:
 
-`.env.local` is ignored by Git. A fresh checkout needs its own configuration. These variables contain public Web app configuration; do not place service account credentials or private keys in them.
-
-## Accounts and ratings
-
-All application sign-in and registration use Firebase Authentication. Existing browser-local account data is retained but is no longer used for access. Firebase accounts are not automatically created from old local accounts.
-
-Administrator roles use the Firebase custom claim `admin: true`. New registrations are ordinary users. The backend checks both a verified, non-revoked ID token and the current account role before listing or deleting users. Administrator accounts cannot be deleted through the application.
-
-To configure account management:
-
-1. Save a Firebase service account JSON outside the repository. It must belong to the configured Firebase project and have permissions to manage Firebase Authentication users.
-2. Set `GOOGLE_APPLICATION_CREDENTIALS` in `.env.server.local` to its absolute path (forward slashes are accepted on Windows). Never put this credential in a `VITE_` variable.
-3. Run `npm run admin:grant -- letianyou@gmail.com` once to assign the selected existing account. The script preserves other custom claims.
-4. Restart `npm run server`, then sign out and sign in again on the website to refresh role claims.
-5. Confirm the administrator can list users and an ordinary account cannot access administrator APIs.
-
-Firebase sessions persist across refreshes in the current tab. Ratings use the letianyou Cloud Firestore database, in the applicationRatings collection. Each Firebase UID has one score for the Recycling & Reuse guide; submitting again replaces it. The API computes the mean of all existing accounts' ratings, rounded to one decimal place. Accounts without a rating are excluded. The page refreshes every 15 seconds, on window focus, and after submitting.
-
-Deleting an account through the application first blocks further ratings and removes its ratings, then deletes the Authentication account. If deletion fails, retry the account deletion; its ratings remain removed. Ratings belonging to accounts deleted directly in the Firebase console are excluded and cleaned up on the next ratings request. Old browser-local ratings are not imported.
-
-Use the named Firestore database letianyou in australia-southeast2 (Melbourne), in Production mode. Set FIRESTORE_DATABASE_ID=letianyou in .env.server.local and grant the backend service account Firestore access. These collections must not allow client writes: all access goes through the authenticated backend. Existing project-wide Firestore rules should be reviewed before deployment, especially broad test-mode rules. Local development uses the existing Node API. Firebase Hosting deployment additionally requires deploying accountApi and the updated hosting rewrites.
-
-
-## Email attachments
-
-The email form calls a Node.js API that verifies Firebase ID tokens and sends attachments through SendGrid. Sign in with a Firebase account to use it; browser-local accounts cannot authenticate to this API.
-
-1. Create a SendGrid account and verify a sender email under Sender Authentication.
-2. Create an API key with Mail Send permission. Keep the key on the server, never in a `VITE_` variable or source file.
-3. Copy `.env.server.example` to `.env.server.local`. Set `SENDGRID_API_KEY`, `SENDGRID_FROM_EMAIL` (the verified sender), and `FIREBASE_PROJECT_ID` (the same project as the Web app).
-4. Run `npm run server` in one terminal and `npm run dev` in another, both from this directory. Restart the API after changing its environment file.
-5. Open **Email a resource**, enter a recipient, subject and message, and attach one PDF, UTF-8 TXT, PNG or JPG file up to 2 MB. Use a simple English filename.
-6. Click **Send email**. A successful response means SendGrid accepted the message. Confirm delivery in the recipient inbox or spam folder, and open the attachment to verify its contents.
-
-The API limits each account to five sending attempts per hour, at least one minute apart, and all accounts together to thirty attempts per hour. Limits are held in memory and reset when the API restarts. Use shared persistent limits before running multiple API instances. File checks validate format and size; they do not perform malware scanning.
-
-The server verifies token signatures, expiry and project identity. This verification does not immediately detect revoked sessions or deleted accounts; an already-issued token may remain valid until expiry. It does not grant account administration permissions.
-
-Vite proxies `/api` to `http://127.0.0.1:3001` during development and preview. The API is a separate service and is not included in `dist`. For deployment, run the API on a server and route `/api` to it over HTTPS. Static hosting alone cannot send these emails. The account management routes require service account credentials; the mail route uses token signature verification.
-
-References: [SendGrid Mail Send API](https://www.twilio.com/docs/sendgrid/api-reference/mail-send/mail-send), [Firebase ID token verification](https://firebase.google.com/docs/auth/admin/verify-id-tokens).
-
-## Build
-
-```sh
-npm run build
-npm run preview
+```bash
+npm run dev
 ```
 
-The production build is written to `dist`. Firebase configuration must be available when building.
+Open the local URL displayed in the terminal.
+
+## Backend Configuration
+
+Some features require backend services, including email sending, ratings and administrator account management.
+
+Copy `.env.server.example` to `.env.server.local` and configure the required Firebase and SendGrid settings.
+
+For local development, start the backend in a separate terminal:
+
+```bash
+npm run server
+```
+
+Keep both the frontend and backend running when testing API-dependent features.
+
+**Security:** Never commit private service account credentials, SendGrid API keys or local environment files containing secrets.
+
+## Authentication and Database
+
+Firebase Authentication manages user registration and login.
+
+Administrator permissions are controlled using Firebase custom claims. Regular users cannot access administrator-only operations.
+
+Cloud Firestore stores application ratings. The backend handles rating submissions and calculations.
+
+## Email Functionality
+
+The application uses SendGrid to send emails with attachments.
+
+Supported attachment formats include PDF, TXT, PNG and JPG, with a maximum file size of 2 MB.
+
+A valid Firebase session is required to use this feature.
+
+## Build and Deployment
+
+Build the application for production:
+
+```bash
+npm run build
+```
+
+The production files are generated in the `dist` directory.
+
+Deploy the frontend using Firebase Hosting:
+
+```bash
+firebase deploy --only hosting
+```
+
+Backend services and Cloud Functions must be configured and deployed separately when their code changes.
+
+## Accessibility
+
+The application includes responsive layouts, accessible form labels, keyboard navigation, focus indicators and a back-to-top button to improve usability.
+
+## Project Information
+
+**Unit:** FIT5032
+
+**Assessment:** Assignment
+
+**Framework:** Vue 3
+
+**Hosting:** Firebase Hosting
+
+**Purpose:** Educational project focused on recycling, reuse and environmental awareness.
