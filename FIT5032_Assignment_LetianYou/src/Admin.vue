@@ -252,7 +252,7 @@ const messageType = ref('alert-success')
 const searchColumn = ref('all')
 const searchQuery = ref('')
 
-const sortColumn = ref('username')
+const sortColumn = ref('role')
 const sortDirection = ref('asc')
 
 const currentPage = ref(1)
@@ -278,6 +278,19 @@ const filteredAccounts = computed(() => {
   })
 
   return [...result].sort((a, b) => {
+    if (sortColumn.value === 'role') {
+      const roleOrder = { admin: 0, user: 1 }
+
+      const comparison =
+        (roleOrder[a.role] ?? 2) - (roleOrder[b.role] ?? 2)
+
+      if (comparison !== 0) {
+        return sortDirection.value === 'asc'
+          ? comparison
+          : -comparison
+      }
+    }
+
     const first = String(a[sortColumn.value] ?? '')
     const second = String(b[sortColumn.value] ?? '')
 
