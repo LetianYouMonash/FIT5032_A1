@@ -1,3 +1,4 @@
+
 <template>
   <a class="skip-link" href="#main-content"> Skip to main content </a>
 
@@ -10,9 +11,14 @@
   </p>
 
   <main id="main-content" ref="mainElement" tabindex="-1">
-    <p v-if="loadingSession" class="container py-5" role="status">Checking your session...</p>
+    <p v-if="loadingSession" class="container py-5" role="status">
+      Checking your session...
+    </p>
 
-    <FirebaseLogin v-else-if="currentPage === 'login'" @login-success="loginSuccess" />
+    <FirebaseLogin
+      v-else-if="currentPage === 'login'"
+      @login-success="loginSuccess"
+    />
 
     <Home
       v-else-if="currentUser && currentPage === 'home'"
@@ -29,11 +35,20 @@
       @back-home="currentPage = 'home'"
     />
 
-    <Map v-else-if="currentUser && currentPage === 'map'" @back-home="currentPage = 'home'" />
+    <Map
+      v-else-if="currentUser && currentPage === 'map'"
+      @back-home="currentPage = 'home'"
+    />
 
-    <Learn v-else-if="currentUser && currentPage === 'learn'" @back-home="currentPage = 'home'" />
+    <Learn
+      v-else-if="currentUser && currentPage === 'learn'"
+      @back-home="currentPage = 'home'"
+    />
 
-    <News v-else-if="currentUser && currentPage === 'news'" @back-home="currentPage = 'home'" />
+    <News
+      v-else-if="currentUser && currentPage === 'news'"
+      @back-home="currentPage = 'home'"
+    />
 
     <Email
       v-else-if="currentUser && currentPage === 'email'"
@@ -44,6 +59,7 @@
     <Profile
       v-else-if="currentUser && currentPage === 'profile'"
       :current-user="currentUser"
+      @profile-updated="handleProfileUpdated"
       @back-home="currentPage = 'home'"
     />
 
@@ -57,7 +73,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 
 import FirebaseLogin from './FirebaseLogin.vue'
 
@@ -68,8 +84,8 @@ import {
 } from './firebaseAuth.js'
 
 import { getAccounts, deleteAccount } from './accountsApi.js'
-
 import { ratingService } from './ratingsApi.js'
+
 import Home from './Home.vue'
 import Recycling from './Recycling.vue'
 import Map from './Map.vue'
@@ -86,8 +102,6 @@ const sessionError = ref('')
 const mainElement = ref(null)
 const pageAnnouncement = ref('')
 
-
-
 const pageNames = {
   login: 'Login',
   home: 'Home',
@@ -99,8 +113,6 @@ const pageNames = {
   profile: 'Profile',
   admin: 'Admin',
 }
-
-const currentPageName = computed(() => pageNames[currentPage.value] || 'Home')
 
 let unsubscribe
 let disposed = false
@@ -133,7 +145,13 @@ onMounted(async () => {
     const stop = await observeFirebase(
       (user) => {
         if (user) {
-          loginSuccess(user)
+          // Keep the current page when the same user's token refreshes.
+          if (currentUser.value?.id === user.id) {
+            currentUser.value = user
+            sessionError.value = ''
+          } else {
+            loginSuccess(user)
+          }
         } else {
           currentUser.value = null
           currentPage.value = 'login'
@@ -169,13 +187,37 @@ const loginSuccess = (user) => {
   currentPage.value = 'home'
 }
 
+// Sync updated Firebase profile data without leaving the Profile page.
+const handleProfileUpdated = (updatedUser) => {
+  if (
+    updatedUser &&
+    currentUser.value?.id === updatedUser.id
+  ) {
+    currentUser.value = updatedUser
+  }
+}
+
 const changePage = (page) => {
-  const publicPages = ['home', 'recycling', 'map', 'learn', 'news', 'profile', 'email']
+  const publicPages = [
+    'home',
+    'recycling',
+    'map',
+    'learn',
+    'news',
+    'profile',
+    'email',
+  ]
 
   const allowed =
-    publicPages.includes(page) || (page === 'admin' && currentUser.value?.role === 'admin')
+    publicPages.includes(page) ||
+    (page === 'admin' && currentUser.value?.role === 'admin')
 
-  currentPage.value = currentUser.value && allowed ? page : currentUser.value ? 'home' : 'login'
+  currentPage.value =
+    currentUser.value && allowed
+      ? page
+      : currentUser.value
+        ? 'home'
+        : 'login'
 }
 
 const backToLogin = async () => {
