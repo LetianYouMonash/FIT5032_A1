@@ -139,6 +139,17 @@
       @back-home="changePage('home')"
     />
   </main>
+  <!-- Back to Top -->
+  <button
+    v-if="showBackToTop"
+    type="button"
+    class="back-to-top"
+    aria-label="Back to top"
+    title="Back to top"
+    @click="scrollToTop"
+  >
+    ↑
+  </button>
 </template>
 
 <script setup>
@@ -176,6 +187,22 @@ const loadingSession = ref(true)
 const sessionError = ref('')
 const mainElement = ref(null)
 const pageAnnouncement = ref('')
+const showBackToTop = ref(false)
+
+const handleScroll = () => {
+  showBackToTop.value = window.scrollY > 250
+}
+
+const scrollToTop = () => {
+  const reduceMotion = window.matchMedia(
+    '(prefers-reduced-motion: reduce)'
+  ).matches
+
+  window.scrollTo({
+    top: 0,
+    behavior: reduceMotion ? 'instant' : 'smooth',
+  })
+}
 const loggingOut = ref(false)
 
 const navigationItems = [
@@ -227,6 +254,8 @@ watch(
 )
 
 onMounted(async () => {
+  window.addEventListener('scroll', handleScroll, { passive: true })
+  handleScroll()
   try {
     const stop = await observeFirebase(
       (user) => {
@@ -264,6 +293,7 @@ onMounted(async () => {
 onUnmounted(() => {
   disposed = true
   unsubscribe?.()
+  window.removeEventListener('scroll', handleScroll)
 })
 
 const loginSuccess = (user) => {
@@ -458,6 +488,67 @@ body {
   background: #fff0f0;
   color: #922020;
   border-color: #edc4c4;
+}
+
+/* Back to Top */
+.back-to-top {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 1000;
+
+  width: 52px;
+  height: 52px;
+  border: none;
+  border-radius: 50%;
+
+  background: #198754;
+  color: #ffffff;
+
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.back-to-top:hover {
+  background: #166534;
+  transform: translateY(-3px);
+}
+
+.back-to-top:focus-visible {
+  outline: 3px solid #005fcc;
+  outline-offset: 3px;
+}
+
+@media (max-width: 576px) {
+  .back-to-top {
+    right: 16px;
+    bottom: 16px;
+    width: 46px;
+    height: 46px;
+    font-size: 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .back-to-top {
+    transition: none;
+  }
+
+  .back-to-top:hover {
+    transform: none;
+  }
 }
 
 /* Accessibility */
